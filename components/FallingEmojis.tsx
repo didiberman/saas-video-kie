@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-const EMOJIS = ["✨", "🎬", "🎥", "🌟", "💫", "🎨", "🔮", "🪄", "⭐", "🎭", "🎪", "🌈"];
+const EMOJIS = ["✨", "🎬", "⭐"];
 
 interface Emoji {
   id: number;
@@ -17,34 +17,33 @@ export function FallingEmojis() {
   const [emojis, setEmojis] = useState<Emoji[]>([]);
 
   useEffect(() => {
-    // Generate initial emojis
-    const initial: Emoji[] = Array.from({ length: 15 }, (_, i) => ({
+    // Generate initial emojis - just a few
+    const initial: Emoji[] = Array.from({ length: 5 }, (_, i) => ({
       id: i,
-      emoji: EMOJIS[Math.floor(Math.random() * EMOJIS.length)],
-      left: Math.random() * 100,
-      delay: Math.random() * 5,
-      duration: 8 + Math.random() * 6,
-      size: 16 + Math.random() * 16,
+      emoji: EMOJIS[i % EMOJIS.length],
+      left: 15 + (i * 18), // Evenly spaced
+      delay: i * 2,
+      duration: 12 + i * 2,
+      size: 20,
     }));
     setEmojis(initial);
 
-    // Add new emojis periodically
+    // Add new emoji slowly
     const interval = setInterval(() => {
       setEmojis(prev => {
         const newEmoji: Emoji = {
           id: Date.now(),
           emoji: EMOJIS[Math.floor(Math.random() * EMOJIS.length)],
-          left: Math.random() * 100,
+          left: 10 + Math.random() * 80,
           delay: 0,
-          duration: 8 + Math.random() * 6,
-          size: 16 + Math.random() * 16,
+          duration: 12 + Math.random() * 4,
+          size: 18 + Math.random() * 6,
         };
-        // Keep max 20 emojis
         const updated = [...prev, newEmoji];
-        if (updated.length > 20) updated.shift();
+        if (updated.length > 8) updated.shift();
         return updated;
       });
-    }, 1500);
+    }, 4000);
 
     return () => clearInterval(interval);
   }, []);
@@ -54,7 +53,7 @@ export function FallingEmojis() {
       {emojis.map((e) => (
         <div
           key={e.id}
-          className="absolute animate-fall opacity-60"
+          className="absolute animate-fall opacity-40"
           style={{
             left: `${e.left}%`,
             fontSize: `${e.size}px`,

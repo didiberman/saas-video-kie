@@ -109,7 +109,7 @@ export function VideoDrawer({ isOpen, onClose, userId }: VideoDrawerProps) {
                                         {/* Video / Status area */}
                                         {gen.status === "success" && gen.video_url ? (
                                             <div
-                                                className="relative aspect-video bg-black cursor-pointer group"
+                                                className="relative bg-black cursor-pointer group"
                                                 onClick={() => setPlayingId(playingId === gen.id ? null : gen.id)}
                                             >
                                                 {playingId === gen.id ? (
@@ -117,23 +117,31 @@ export function VideoDrawer({ isOpen, onClose, userId }: VideoDrawerProps) {
                                                         src={gen.video_url}
                                                         controls
                                                         autoPlay
-                                                        className="w-full h-full object-cover"
+                                                        className="w-full max-h-[400px] object-contain mx-auto"
                                                     />
                                                 ) : (
-                                                    <div className="absolute inset-0 flex items-center justify-center bg-white/5">
-                                                        <PlayCircle className="w-10 h-10 text-white/50 group-hover:text-white transition-colors" />
-                                                    </div>
+                                                    <>
+                                                        <video
+                                                            src={gen.video_url}
+                                                            className="w-full max-h-[200px] object-contain mx-auto"
+                                                            muted
+                                                            preload="metadata"
+                                                        />
+                                                        <div className="absolute inset-0 flex items-center justify-center bg-black/30 group-hover:bg-black/40 transition-colors">
+                                                            <PlayCircle className="w-12 h-12 text-white/70 group-hover:text-white group-hover:scale-110 transition-all" />
+                                                        </div>
+                                                    </>
                                                 )}
                                             </div>
                                         ) : gen.status === "waiting" ? (
-                                            <div className="aspect-video flex items-center justify-center bg-white/[0.02]">
+                                            <div className="h-[120px] flex items-center justify-center bg-white/[0.02]">
                                                 <div className="flex flex-col items-center gap-2">
                                                     <Loader2 className="w-6 h-6 text-violet-400 animate-spin" />
                                                     <span className="text-xs text-white/30">Generating...</span>
                                                 </div>
                                             </div>
                                         ) : gen.status === "fail" ? (
-                                            <div className="aspect-video flex items-center justify-center bg-red-500/5">
+                                            <div className="h-[120px] flex items-center justify-center bg-red-500/5">
                                                 <div className="flex flex-col items-center gap-2 px-4">
                                                     <AlertCircle className="w-6 h-6 text-red-400/60" />
                                                     <span className="text-xs text-red-300/60 text-center">{gen.fail_message || "Failed"}</span>
