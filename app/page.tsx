@@ -5,9 +5,8 @@ import { GlassCard } from "@/components/GlassCard";
 import { VideoDrawer } from "@/components/VideoDrawer";
 import { Sparkles, History, LogOut, Clock, RotateCcw, RectangleHorizontal, RectangleVertical } from "lucide-react";
 import { motion } from "framer-motion";
-import { getFirebaseAuth, getFirebaseFirestore } from "@/lib/firebase/client";
+import { getFirebaseAuth } from "@/lib/firebase/client";
 import { onAuthStateChanged, signOut, User } from "firebase/auth";
-import { doc, onSnapshot } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import { StreamingText } from "@/components/StreamingText";
 
@@ -43,28 +42,46 @@ export default function Home() {
     return () => unsubscribe();
   }, [firebaseAuth, router]);
 
-  // Listen for video completion via Firestore onSnapshot
+  // Poll for video completion (Firestore cross-project access doesn't work from client)
   useEffect(() => {
-    if (!currentTaskId || phase !== "generating") return;
+    if (!currentTaskId || phase !== "generating" || !user) return;
 
-    const db = getFirebaseFirestore();
-    if (!db) return;
+    let cancelled = false;
 
-    const unsubscribe = onSnapshot(doc(db, "generations", currentTaskId), (snap) => {
-      const data = snap.data();
-      if (!data) return;
+    const pollStatus = async () => {
+      try {
+        const token = await user.getIdToken();
+        const res = await fetch(`/api/status/${currentTaskId}`, {
+          headers: { "Authorization": `Bearer ${token}` },
+        });
 
-      if (data.status === "success" && data.video_url) {
-        setVideoUrl(data.video_url);
-        setPhase("done");
-      } else if (data.status === "fail") {
-        setErrorMessage(data.fail_message || "Video generation failed");
-        setPhase("error");
+        if (!res.ok) return;
+
+        const data = await res.json();
+
+        if (cancelled) return;
+
+        if (data.status === "success" && data.video_url) {
+          setVideoUrl(data.video_url);
+          setPhase("done");
+        } else if (data.status === "fail") {
+          setErrorMessage(data.fail_message || "Video generation failed");
+          setPhase("error");
+        }
+      } catch (e) {
+        console.error("Polling error:", e);
       }
-    });
+    };
 
-    return () => unsubscribe();
-  }, [currentTaskId, phase]);
+    // Poll every 3 seconds
+    const interval = setInterval(pollStatus, 3000);
+    pollStatus();
+
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, [currentTaskId, phase, user]);
 
   const handleGenerate = async () => {
     if (!prompt.trim() || !user) return;
@@ -306,7 +323,7 @@ export default function Home() {
               <StreamingText
                 text={streamedScript}
                 isStreaming={phase === "scripting"}
-                className="max-h-[200px] rounded-lg bg-white/5 border border-white/10 p-4 text-sm text-white/80 font-light leading-relaxed"
+                className="max-h-[350px] min-h-[150px] rounded-lg bg-white/5 border border-white/10 p-5 text-sm text-white/80 font-light leading-relaxed"
               />
             )}
 

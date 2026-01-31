@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import ReactMarkdown from "react-markdown";
 
 interface StreamingTextProps {
   text: string;
@@ -12,7 +13,6 @@ export function StreamingText({ text, isStreaming, className = "" }: StreamingTe
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Auto-scroll to bottom as text streams
     if (containerRef.current) {
       containerRef.current.scrollTop = containerRef.current.scrollHeight;
     }
@@ -20,19 +20,12 @@ export function StreamingText({ text, isStreaming, className = "" }: StreamingTe
 
   return (
     <div ref={containerRef} className={`${className} overflow-y-auto`}>
-      <p className="whitespace-pre-wrap">
-        {text}
-        {isStreaming && (
-          <span
-            className="inline-block ml-0.5 text-violet-400"
-            style={{
-              animation: 'pulse 1s ease-in-out infinite',
-            }}
-          >
-            |
-          </span>
-        )}
-      </p>
+      <div className="prose prose-invert prose-sm max-w-none prose-p:my-1 prose-p:leading-relaxed">
+        <ReactMarkdown>{text}</ReactMarkdown>
+      </div>
+      {isStreaming && (
+        <span className="inline-block text-violet-400 animate-pulse">|</span>
+      )}
     </div>
   );
 }
