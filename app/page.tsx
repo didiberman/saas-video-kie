@@ -237,8 +237,8 @@ export default function Home() {
               spellCheck={false}
             />
 
-            <div className="flex justify-between items-center px-6 pb-4 border-t border-white/5 pt-4">
-              <div className="flex items-center gap-4">
+            <div className="flex flex-col gap-3 px-4 md:px-6 pb-4 border-t border-white/5 pt-4 md:flex-row md:justify-between md:items-center">
+              <div className="flex items-center gap-3 md:gap-4">
                 {/* Duration selector */}
                 <div className="flex items-center gap-2">
                   <Clock className="w-3.5 h-3.5 text-white/30" />
@@ -300,7 +300,7 @@ export default function Home() {
               <button
                 onClick={handleGenerate}
                 disabled={!prompt.trim()}
-                className="h-10 px-6 rounded-full bg-gradient-to-r from-violet-500 to-blue-500 text-white font-medium hover:from-violet-400 hover:to-blue-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:scale-105 active:scale-95 flex items-center gap-2 shadow-lg shadow-violet-500/20"
+                className="h-10 px-6 rounded-full bg-gradient-to-r from-violet-500 to-blue-500 text-white font-medium hover:from-violet-400 hover:to-blue-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-2 shadow-lg shadow-violet-500/20 w-full md:w-auto"
               >
                 <span>Generate</span>
                 <Sparkles className="w-4 h-4" />
