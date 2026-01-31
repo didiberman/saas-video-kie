@@ -40,15 +40,16 @@ jobs:
       - name: Configure Docker
         run: gcloud auth configure-docker
 
-      # Build and Push Container
-      # Note: We pass Firebase Keys as Build Args. Ensure these secrets are set in GitHub.
       - name: Build and Push
         run: |
-          gcloud builds submit --tag gcr.io/${{ env.PROJECT_ID }}/video-saas:${{ github.sha }} \
-            --project ${{ env.PROJECT_ID }} \
+          docker build \
             --build-arg NEXT_PUBLIC_FIREBASE_API_KEY="${{ secrets.FIREBASE_API_KEY }}" \
             --build-arg NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN="${{ secrets.FIREBASE_AUTH_DOMAIN }}" \
+            -t gcr.io/${{ env.PROJECT_ID }}/video-saas:${{ github.sha }} \
+            -t gcr.io/${{ env.PROJECT_ID }}/video-saas:latest \
             .
+          docker push gcr.io/${{ env.PROJECT_ID }}/video-saas:${{ github.sha }}
+          docker push gcr.io/${{ env.PROJECT_ID }}/video-saas:latest
 
       # Deploy to Cloud Run
       - name: Deploy to Cloud Run

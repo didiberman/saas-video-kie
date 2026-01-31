@@ -44,3 +44,5 @@ terraform/*.tfstate
 terraform/*.tfstate.backup
 terraform/terraform.tfvars
 terraform/.terraform.lock.hcl
+terraform/.terraform.tfstate.lock.info
+terraform/dist/start-generation.zip

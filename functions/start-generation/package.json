@@ -1,11 +1,12 @@
 {
     "name": "start-generation",
     "version": "1.0.0",
+    "description": "Start Video Generation Function",
     "main": "index.js",
     "dependencies": {
-        "@google-cloud/firestore": "^8.2.0",
         "@google-cloud/functions-framework": "^3.0.0",
-        "firebase-admin": "^13.6.0",
-        "node-fetch": "^3.3.2"
+        "firebase-admin": "^11.5.0",
+        "node-fetch": "^2.6.7",
+        "@google-cloud/vertexai": "^1.1.0"
     }
 }

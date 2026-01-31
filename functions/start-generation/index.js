@@ -61,7 +61,32 @@ functions.http('startGeneration', async (req, res) => {
             return res.status(403).json({ error: 'Insufficient credits' });
         }
 
-        // 4. Call KIE AI
+        // 4. Generate Script with Gemini (Vertex AI)
+        const { VertexAI } = require('@google-cloud/vertexai');
+        const vertex_ai = new VertexAI({ project: 'gen-lang-client-0104807788', location: 'us-central1' });
+        const model = 'gemini-1.5-flash-001';
+        const generativeModel = vertex_ai.preview.getGenerativeModel({ model: model });
+
+        const scriptPrompt = `You are a professional video scriptwriter. 
+        Create a concise, engaging video script (approx 30-45 seconds) based on the following user idea: "${prompt}".
+        
+        The script should be visual and ready for video generation. 
+        Return ONLY the script text, no introductory or concluding remarks.`;
+
+        const streamingResp = await generativeModel.generateContentStream(scriptPrompt);
+        let generatedScript = '';
+        for await (const item of streamingResp.stream) {
+            generatedScript += item.candidates[0].content.parts[0].text;
+        }
+        // Fallback for aggregated response
+        if (!generatedScript) {
+            const result = await streamingResp.response;
+            generatedScript = result.candidates[0].content.parts[0].text;
+        }
+
+        console.log("Generated Script:", generatedScript);
+
+        // 5. Call KIE AI with the Generated Script
         const kieRes = await fetch('https://api.kie.ai/v1/videos/generate', {
             method: "POST",
             headers: {
@@ -69,7 +94,7 @@ functions.http('startGeneration', async (req, res) => {
                 "Content-Type": "application/json",
             },
             body: JSON.stringify({
-                prompt,
+                prompt: generatedScript, // Use the script from Gemini
                 model: "k-2.0",
                 callback_url: webhookUrl,
                 aspect_ratio: "16:9"
@@ -83,16 +108,18 @@ functions.http('startGeneration', async (req, res) => {
 
         const kieData = await kieRes.json();
 
-        // 5. Store in Firestore ("generations" collection)
+        // 6. Store in Firestore ("generations" collection)
+        // Storing both the original idea and the generated script for reference
         await db.collection('generations').doc(kieData.id).set({
             user_id: uid,
-            prompt: prompt,
+            original_prompt: prompt,
+            generated_script: generatedScript, // Save the script
             status: 'pending',
             kie_id: kieData.id,
             created_at: new Date()
         });
 
-        // 6. Deduct Credits
+        // 7. Deduct Credits
         await creditsRef.update({
             seconds_remaining: secondsRemaining - 5,
             updated_at: new Date()

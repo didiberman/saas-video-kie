@@ -31,6 +31,19 @@ resource "google_cloud_run_v2_service" "frontend" {
   }
 }
 
+resource "google_cloud_run_domain_mapping" "frontend" {
+  location = var.region
+  name     = var.domain_name
+
+  metadata {
+    namespace = var.project_id
+  }
+
+  spec {
+    route_name = google_cloud_run_v2_service.frontend.name
+  }
+}
+
 # Allow public access to frontend
 resource "google_cloud_run_service_iam_member" "public_frontend" {
   service  = google_cloud_run_v2_service.frontend.name
