@@ -5,8 +5,9 @@ import { GlassCard } from "@/components/GlassCard";
 import { VideoDrawer } from "@/components/VideoDrawer";
 import { Sparkles, History, LogOut, Clock, RotateCcw, RectangleHorizontal, RectangleVertical, Square } from "lucide-react";
 import { motion } from "framer-motion";
-import { getFirebaseAuth } from "@/lib/firebase/client";
+import { getFirebaseAuth, getFirebaseFirestore } from "@/lib/firebase/client";
 import { onAuthStateChanged, signOut, User } from "firebase/auth";
+import { doc, onSnapshot } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import ReactMarkdown from "react-markdown";
 
@@ -48,46 +49,28 @@ export default function Home() {
     scriptEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [streamedScript]);
 
-  // Poll for video completion
+  // Listen for video completion via Firestore onSnapshot
   useEffect(() => {
-    if (!currentTaskId || phase !== "generating" || !user) return;
+    if (!currentTaskId || phase !== "generating") return;
 
-    let cancelled = false;
+    const db = getFirebaseFirestore();
+    if (!db) return;
 
-    const pollStatus = async () => {
-      try {
-        const token = await user.getIdToken();
-        const res = await fetch(`/api/status/${currentTaskId}`, {
-          headers: { "Authorization": `Bearer ${token}` },
-        });
+    const unsubscribe = onSnapshot(doc(db, "generations", currentTaskId), (snap) => {
+      const data = snap.data();
+      if (!data) return;
 
-        if (!res.ok) return;
-
-        const data = await res.json();
-
-        if (cancelled) return;
-
-        if (data.status === "success" && data.video_url) {
-          setVideoUrl(data.video_url);
-          setPhase("done");
-        } else if (data.status === "fail") {
-          setErrorMessage(data.fail_message || "Video generation failed");
-          setPhase("error");
-        }
-      } catch (e) {
-        console.error("Polling error:", e);
+      if (data.status === "success" && data.video_url) {
+        setVideoUrl(data.video_url);
+        setPhase("done");
+      } else if (data.status === "fail") {
+        setErrorMessage(data.fail_message || "Video generation failed");
+        setPhase("error");
       }
-    };
+    });
 
-    // Poll every 5 seconds
-    const interval = setInterval(pollStatus, 5000);
-    pollStatus(); // Initial check
-
-    return () => {
-      cancelled = true;
-      clearInterval(interval);
-    };
-  }, [currentTaskId, phase, user]);
+    return () => unsubscribe();
+  }, [currentTaskId, phase]);
 
   const handleGenerate = async () => {
     if (!prompt.trim() || !user) return;

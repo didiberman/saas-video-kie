@@ -41,9 +41,7 @@ resource "google_cloudfunctions2_function" "start_generation" {
 
     environment_variables = {
       KIE_API_KEY = local.kie_api_key
-      # Needs webhook URL to point to the other function
-      WEBHOOK_URL                   = "https://${var.region}-${var.project_id}.cloudfunctions.net/webhook-handler"
-      FIREBASE_SERVICE_ACCOUNT_JSON = local.kiesaas_service_account_json
+      WEBHOOK_URL = "https://${var.region}-${var.project_id}.cloudfunctions.net/webhook-handler"
     }
   }
 }
@@ -139,10 +137,6 @@ resource "google_cloudfunctions2_function" "check_status" {
     max_instance_count = 10
     available_memory   = "256M"
     timeout_seconds    = 30
-
-    environment_variables = {
-      FIREBASE_SERVICE_ACCOUNT_JSON = local.kiesaas_service_account_json
-    }
   }
 }
 

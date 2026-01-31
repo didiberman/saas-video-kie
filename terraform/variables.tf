@@ -37,21 +37,17 @@ variable "cloudflare_zone_id" {
 variable "firebase_api_key" {
   description = "Firebase Web API Key"
   type        = string
+  default     = "AIzaSyCpuuD51EkkiGIpr57FT_RqikO6Bdplrec"
 }
 
 variable "firebase_auth_domain" {
   description = "Firebase Auth Domain"
   type        = string
+  default     = "gen-lang-client-0104807788.firebaseapp.com"
 }
 
 variable "firebase_project_id" {
-  description = "Firebase Project ID for Firestore (gen-lang-client project)"
+  description = "Firebase Project ID"
   type        = string
   default     = "gen-lang-client-0104807788"
-}
-
-variable "kiesaas_service_account_json" {
-  description = "JSON key for the external KIE SaaS Firebase project (for Auth verification)"
-  type        = string
-  sensitive   = true
 }

@@ -2,13 +2,10 @@ const functions = require('@google-cloud/functions-framework');
 const admin = require('firebase-admin');
 const { Firestore } = require('@google-cloud/firestore');
 
-// Initialize Firebase Admin with kiesaas credentials (for auth token verification only)
-const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON);
-admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount)
-});
+// Initialize Firebase Admin with default credentials (same project)
+admin.initializeApp();
 
-// Use a separate Firestore client for gen-lang-client project
+// Firestore client (same project)
 const db = new Firestore();
 
 functions.http('checkStatus', async (req, res) => {
