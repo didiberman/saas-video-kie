@@ -192,3 +192,18 @@ body {
   animation: aurora 20s ease-in-out infinite;
   pointer-events: none;
 }
+
+/* ChatGPT-style streaming text fade-in */
+@keyframes text-fade-in {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+.streaming-text {
+  animation: text-fade-in 0.3s ease-out forwards;
+}
+
+.streaming-text p,
+.streaming-text span {
+  animation: text-fade-in 0.4s ease-out forwards;
+}

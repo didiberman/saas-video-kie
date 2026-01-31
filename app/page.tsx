@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { GlassCard } from "@/components/GlassCard";
 import { VideoDrawer } from "@/components/VideoDrawer";
 import { Sparkles, History, LogOut, Clock, RotateCcw, RectangleHorizontal, RectangleVertical } from "lucide-react";
@@ -9,7 +9,7 @@ import { getFirebaseAuth, getFirebaseFirestore } from "@/lib/firebase/client";
 import { onAuthStateChanged, signOut, User } from "firebase/auth";
 import { doc, onSnapshot } from "firebase/firestore";
 import { useRouter } from "next/navigation";
-import ReactMarkdown from "react-markdown";
+import { StreamingText } from "@/components/StreamingText";
 
 type Phase = "idle" | "scripting" | "generating" | "done" | "error";
 type AspectRatio = "9:16" | "16:9";
@@ -29,7 +29,6 @@ export default function Home() {
   const [currentTaskId, setCurrentTaskId] = useState<string | null>(null);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const scriptEndRef = useRef<HTMLDivElement>(null);
 
   // Handle Auth State
   useEffect(() => {
@@ -43,11 +42,6 @@ export default function Home() {
     });
     return () => unsubscribe();
   }, [firebaseAuth, router]);
-
-  // Auto-scroll script panel
-  useEffect(() => {
-    scriptEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [streamedScript]);
 
   // Listen for video completion via Firestore onSnapshot
   useEffect(() => {
@@ -298,29 +292,22 @@ export default function Home() {
         <GlassCard className="w-full max-w-2xl relative z-10 p-1 shimmer-border" delay={0}>
           <div className="p-6 space-y-4">
             {/* Phase indicator */}
-            <div className="flex items-center gap-3">
-              {(phase === "scripting" || phase === "generating") && (
-                <div className="w-4 h-4 border-2 border-violet-400/30 border-t-violet-400 rounded-full animate-spin" />
-              )}
-              <span className="text-sm font-medium text-white/60">
-                {phase === "scripting" && "Writing script..."}
-                {phase === "generating" && "Generating video..."}
-                {phase === "done" && "Video ready!"}
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium text-white/40">
+                {phase === "scripting" && "Writing script"}
+                {phase === "generating" && "Generating video"}
+                {phase === "done" && "Video ready"}
                 {phase === "error" && "Something went wrong"}
               </span>
             </div>
 
-            {/* Streamed script display with markdown */}
+            {/* Streamed script display */}
             {streamedScript && (
-              <div className="max-h-[200px] overflow-y-auto rounded-lg bg-white/5 border border-white/10 p-4">
-                <div className="text-sm text-white/80 font-light leading-relaxed prose prose-invert prose-sm max-w-none prose-p:my-2 prose-headings:text-white/90">
-                  <ReactMarkdown>{streamedScript}</ReactMarkdown>
-                  {phase === "scripting" && (
-                    <span className="inline-block w-1.5 h-4 bg-violet-400 animate-pulse ml-0.5 align-middle" />
-                  )}
-                </div>
-                <div ref={scriptEndRef} />
-              </div>
+              <StreamingText
+                text={streamedScript}
+                isStreaming={phase === "scripting"}
+                className="max-h-[200px] rounded-lg bg-white/5 border border-white/10 p-4 text-sm text-white/80 font-light leading-relaxed"
+              />
             )}
 
             {/* Video player */}
