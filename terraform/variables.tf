@@ -44,6 +44,12 @@ variable "firebase_auth_domain" {
   type        = string
 }
 
+variable "firebase_project_id" {
+  description = "Firebase Project ID for Firestore (gen-lang-client project)"
+  type        = string
+  default     = "gen-lang-client-0104807788"
+}
+
 variable "kiesaas_service_account_json" {
   description = "JSON key for the external KIE SaaS Firebase project (for Auth verification)"
   type        = string

@@ -15,6 +15,10 @@ resource "google_cloud_run_v2_service" "frontend" {
         name  = "NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN"
         value = var.firebase_auth_domain
       }
+      env {
+        name  = "NEXT_PUBLIC_FIREBASE_PROJECT_ID"
+        value = var.firebase_project_id
+      }
       # Inject the Backend Function URL into the Frontend
       env {
         name  = "NEXT_PUBLIC_API_URL"

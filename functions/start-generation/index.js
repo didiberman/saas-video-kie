@@ -26,6 +26,13 @@ functions.http('startGeneration', async (req, res) => {
         return;
     }
 
+    // Helper to send NDJSON line
+    const sendEvent = (data) => {
+        res.write(JSON.stringify(data) + '\n');
+    };
+
+    let streamingStarted = false;
+
     try {
         // 1. Validate Auth (Firebase ID Token)
         const authHeader = req.headers.authorization;
@@ -67,7 +74,15 @@ functions.http('startGeneration', async (req, res) => {
             return res.status(403).json({ error: 'Insufficient credits' });
         }
 
-        // 4. Generate Script with Gemini (Vertex AI)
+        // 4. Switch to streaming mode
+        res.writeHead(200, {
+            'Content-Type': 'application/x-ndjson',
+            'Transfer-Encoding': 'chunked',
+            'Cache-Control': 'no-cache',
+        });
+        streamingStarted = true;
+
+        // 5. Generate Script with Gemini (Vertex AI) — stream chunks to client
         const { VertexAI } = require('@google-cloud/vertexai');
         const vertex_ai = new VertexAI({ project: 'gen-lang-client-0104807788', location: 'us-central1' });
         const model = 'gemini-2.5-flash';
@@ -82,17 +97,25 @@ functions.http('startGeneration', async (req, res) => {
         const streamingResp = await generativeModel.generateContentStream(scriptPrompt);
         let generatedScript = '';
         for await (const item of streamingResp.stream) {
-            generatedScript += item.candidates[0].content.parts[0].text;
+            const chunk = item.candidates?.[0]?.content?.parts?.[0]?.text || '';
+            if (chunk) {
+                generatedScript += chunk;
+                sendEvent({ type: 'script', text: chunk });
+            }
         }
         // Fallback for aggregated response
         if (!generatedScript) {
             const result = await streamingResp.response;
             generatedScript = result.candidates[0].content.parts[0].text;
+            sendEvent({ type: 'script', text: generatedScript });
         }
 
         console.log("Generated Script:", generatedScript);
 
-        // 5. Call KIE AI Image-to-Video API with the Generated Script
+        // 6. Notify client: now generating video
+        sendEvent({ type: 'status', message: 'Generating video...' });
+
+        // 7. Call KIE AI Image-to-Video API with the Generated Script
         const kieRes = await fetch('https://api.kie.ai/api/v1/jobs/createTask', {
             method: "POST",
             headers: {
@@ -118,7 +141,7 @@ functions.http('startGeneration', async (req, res) => {
 
         const taskId = kieData.data.taskId;
 
-        // 6. Store in Firestore ("generations" collection)
+        // 8. Store in Firestore ("generations" collection)
         await db.collection('generations').doc(taskId).set({
             user_id: uid,
             original_prompt: prompt,
@@ -128,16 +151,23 @@ functions.http('startGeneration', async (req, res) => {
             created_at: new Date()
         });
 
-        // 7. Deduct Credits
+        // 9. Deduct Credits
         await creditsRef.update({
             seconds_remaining: secondsRemaining - creditCost,
             updated_at: new Date()
         });
 
-        return res.status(200).json({ success: true, id: taskId });
+        // 10. Send final event with taskId
+        sendEvent({ type: 'done', taskId: taskId });
+        res.end();
 
     } catch (error) {
         console.error('Error:', error);
-        return res.status(500).json({ error: error.message });
+        if (streamingStarted) {
+            sendEvent({ type: 'error', message: error.message });
+            res.end();
+        } else {
+            return res.status(500).json({ error: error.message });
+        }
     }
 });

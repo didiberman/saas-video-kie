@@ -1,29 +1,36 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { GlassCard } from "@/components/GlassCard";
 import { VideoDrawer } from "@/components/VideoDrawer";
-import { Sparkles, History, LogOut, Clock, Timer } from "lucide-react";
+import { Sparkles, History, LogOut, Clock, RotateCcw } from "lucide-react";
 import { motion } from "framer-motion";
-import { getFirebaseAuth } from "@/lib/firebase/client";
+import { getFirebaseAuth, getFirebaseFirestore } from "@/lib/firebase/client";
 import { onAuthStateChanged, signOut, User } from "firebase/auth";
+import { doc, onSnapshot } from "firebase/firestore";
 import { useRouter } from "next/navigation";
+
+type Phase = "idle" | "scripting" | "generating" | "done" | "error";
 
 export default function Home() {
   const [prompt, setPrompt] = useState("");
   const [duration, setDuration] = useState<"6" | "10">("6");
-  const [isGenerating, setIsGenerating] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const router = useRouter();
   const firebaseAuth = useMemo(() => getFirebaseAuth(), []);
 
+  // Streaming state
+  const [phase, setPhase] = useState<Phase>("idle");
+  const [streamedScript, setStreamedScript] = useState("");
+  const [currentTaskId, setCurrentTaskId] = useState<string | null>(null);
+  const [videoUrl, setVideoUrl] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const scriptEndRef = useRef<HTMLDivElement>(null);
+
   // Handle Auth State
   useEffect(() => {
-    if (!firebaseAuth) {
-      return;
-    }
-
+    if (!firebaseAuth) return;
     const unsubscribe = onAuthStateChanged(firebaseAuth, (currentUser) => {
       if (!currentUser) {
         router.push("/login");
@@ -34,53 +41,121 @@ export default function Home() {
     return () => unsubscribe();
   }, [firebaseAuth, router]);
 
+  // Auto-scroll script panel
+  useEffect(() => {
+    scriptEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [streamedScript]);
+
+  // Listen for video completion via Firestore onSnapshot
+  useEffect(() => {
+    if (!currentTaskId || phase !== "generating") return;
+
+    const db = getFirebaseFirestore();
+    if (!db) return;
+
+    const unsubscribe = onSnapshot(doc(db, "generations", currentTaskId), (snap) => {
+      const data = snap.data();
+      if (!data) return;
+
+      if (data.status === "success" && data.video_url) {
+        setVideoUrl(data.video_url);
+        setPhase("done");
+      } else if (data.status === "failed") {
+        setErrorMessage(data.error || "Video generation failed");
+        setPhase("error");
+      }
+    });
+
+    return () => unsubscribe();
+  }, [currentTaskId, phase]);
+
   const handleGenerate = async () => {
     if (!prompt.trim() || !user) return;
-    setIsGenerating(true);
+
+    // Reset streaming state
+    setPhase("scripting");
+    setStreamedScript("");
+    setCurrentTaskId(null);
+    setVideoUrl(null);
+    setErrorMessage(null);
 
     try {
-      // Get Firebase ID Token
       const token = await user.getIdToken();
 
-      // Call local proxy (which forwards to Cloud Function)
-      const apiUrl = "/api/generate";
-
-      const res = await fetch(apiUrl, {
+      const res = await fetch("/api/generate", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
+          "Authorization": `Bearer ${token}`,
         },
         body: JSON.stringify({ prompt, duration }),
       });
 
-      const data = await res.json();
+      const contentType = res.headers.get("content-type") || "";
 
-      if (!res.ok) {
+      // Non-streaming error response
+      if (!contentType.includes("ndjson")) {
+        const data = await res.json();
         throw new Error(data.error || "Generation failed");
       }
 
-      // Success
-      setPrompt("");
-      setIsDrawerOpen(true);
-      alert("Dream request sent! Check the Vault for updates.");
+      // Read NDJSON stream
+      const reader = res.body!.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || ""; // Keep incomplete line in buffer
+
+        for (const line of lines) {
+          if (!line.trim()) continue;
+          try {
+            const event = JSON.parse(line);
+
+            if (event.type === "script") {
+              setStreamedScript((prev) => prev + event.text);
+            } else if (event.type === "status") {
+              setPhase("generating");
+            } else if (event.type === "done") {
+              setCurrentTaskId(event.taskId);
+              setPhase("generating");
+            } else if (event.type === "error") {
+              throw new Error(event.message);
+            }
+          } catch (parseErr: any) {
+            if (parseErr.message && !parseErr.message.includes("JSON")) {
+              throw parseErr;
+            }
+          }
+        }
+      }
     } catch (e: any) {
-      alert(e.message);
-    } finally {
-      setIsGenerating(false);
+      setErrorMessage(e.message);
+      setPhase("error");
     }
   };
 
-  const handleSignOut = async () => {
-    if (!firebaseAuth) {
-      return;
-    }
+  const handleReset = () => {
+    setPhase("idle");
+    setPrompt("");
+    setStreamedScript("");
+    setCurrentTaskId(null);
+    setVideoUrl(null);
+    setErrorMessage(null);
+  };
 
+  const handleSignOut = async () => {
+    if (!firebaseAuth) return;
     await signOut(firebaseAuth);
     router.push("/login");
   };
 
-  if (!user) return null; // Or a loading spinner
+  if (!user) return null;
 
   return (
     <main className="min-h-screen w-full bg-black relative overflow-hidden selection:bg-violet-500/20 flex flex-col items-center justify-center p-6">
@@ -132,65 +207,119 @@ export default function Home() {
         </div>
       </header>
 
-      {/* Main Creation Interface */}
-      <GlassCard className="w-full max-w-2xl relative z-10 p-1 shimmer-border" delay={0.2}>
-        <div className="relative">
-          <textarea
-            value={prompt}
-            onChange={(e) => setPrompt(e.target.value)}
-            placeholder="Describe your video dream..."
-            className="w-full min-h-[120px] bg-transparent text-lg md:text-2xl text-white font-light placeholder:text-white/20 p-6 resize-none focus:outline-none"
-            spellCheck={false}
-          />
+      {/* Main Content — switches between prompt form and streaming panel */}
+      {phase === "idle" ? (
+        <GlassCard className="w-full max-w-2xl relative z-10 p-1 shimmer-border" delay={0.2}>
+          <div className="relative">
+            <textarea
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+              placeholder="Describe your video dream..."
+              className="w-full min-h-[120px] bg-transparent text-lg md:text-2xl text-white font-light placeholder:text-white/20 p-6 resize-none focus:outline-none"
+              spellCheck={false}
+            />
 
-          <div className="flex justify-between items-center px-6 pb-4 border-t border-white/5 pt-4">
-            <div className="flex items-center gap-2">
-              <Clock className="w-3.5 h-3.5 text-white/30" />
-              <div className="flex rounded-lg overflow-hidden border border-white/10">
-                <button
-                  type="button"
-                  onClick={() => setDuration("6")}
-                  className={`px-3 py-1.5 text-xs font-medium transition-all ${
-                    duration === "6"
-                      ? "bg-violet-500/20 text-violet-300 border-r border-white/10"
-                      : "text-white/30 hover:text-white/50 border-r border-white/10"
-                  }`}
-                >
-                  6s
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setDuration("10")}
-                  className={`px-3 py-1.5 text-xs font-medium transition-all ${
-                    duration === "10"
-                      ? "bg-violet-500/20 text-violet-300"
-                      : "text-white/30 hover:text-white/50"
-                  }`}
-                >
-                  10s
-                </button>
+            <div className="flex justify-between items-center px-6 pb-4 border-t border-white/5 pt-4">
+              <div className="flex items-center gap-2">
+                <Clock className="w-3.5 h-3.5 text-white/30" />
+                <div className="flex rounded-lg overflow-hidden border border-white/10">
+                  <button
+                    type="button"
+                    onClick={() => setDuration("6")}
+                    className={`px-3 py-1.5 text-xs font-medium transition-all ${
+                      duration === "6"
+                        ? "bg-violet-500/20 text-violet-300 border-r border-white/10"
+                        : "text-white/30 hover:text-white/50 border-r border-white/10"
+                    }`}
+                  >
+                    6s
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setDuration("10")}
+                    className={`px-3 py-1.5 text-xs font-medium transition-all ${
+                      duration === "10"
+                        ? "bg-violet-500/20 text-violet-300"
+                        : "text-white/30 hover:text-white/50"
+                    }`}
+                  >
+                    10s
+                  </button>
+                </div>
               </div>
+              <button
+                onClick={handleGenerate}
+                disabled={!prompt.trim()}
+                className="h-10 px-6 rounded-full bg-gradient-to-r from-violet-500 to-blue-500 text-white font-medium hover:from-violet-400 hover:to-blue-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:scale-105 active:scale-95 flex items-center gap-2 shadow-lg shadow-violet-500/20"
+              >
+                <span>Generate</span>
+                <Sparkles className="w-4 h-4" />
+              </button>
             </div>
-            <button
-              onClick={handleGenerate}
-              disabled={!prompt.trim() || isGenerating}
-              className="h-10 px-6 rounded-full bg-gradient-to-r from-violet-500 to-blue-500 text-white font-medium hover:from-violet-400 hover:to-blue-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:scale-105 active:scale-95 flex items-center gap-2 shadow-lg shadow-violet-500/20"
-            >
-              {isGenerating ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  <span>Dreaming...</span>
-                </>
-              ) : (
-                <>
-                  <span>Generate</span>
-                  <Sparkles className="w-4 h-4" />
-                </>
-              )}
-            </button>
           </div>
-        </div>
-      </GlassCard>
+        </GlassCard>
+      ) : (
+        /* Streaming / Progress Panel */
+        <GlassCard className="w-full max-w-2xl relative z-10 p-1 shimmer-border" delay={0}>
+          <div className="p-6 space-y-4">
+            {/* Phase indicator */}
+            <div className="flex items-center gap-3">
+              {(phase === "scripting" || phase === "generating") && (
+                <div className="w-4 h-4 border-2 border-violet-400/30 border-t-violet-400 rounded-full animate-spin" />
+              )}
+              <span className="text-sm font-medium text-white/60">
+                {phase === "scripting" && "Writing script..."}
+                {phase === "generating" && "Generating video..."}
+                {phase === "done" && "Video ready!"}
+                {phase === "error" && "Something went wrong"}
+              </span>
+            </div>
+
+            {/* Streamed script display */}
+            {streamedScript && (
+              <div className="max-h-[200px] overflow-y-auto rounded-lg bg-white/5 border border-white/10 p-4">
+                <p className="text-sm text-white/80 font-light whitespace-pre-wrap leading-relaxed">
+                  {streamedScript}
+                  {phase === "scripting" && (
+                    <span className="inline-block w-1.5 h-4 bg-violet-400 animate-pulse ml-0.5 align-middle" />
+                  )}
+                </p>
+                <div ref={scriptEndRef} />
+              </div>
+            )}
+
+            {/* Video player */}
+            {phase === "done" && videoUrl && (
+              <div className="rounded-xl overflow-hidden border border-white/10">
+                <video
+                  src={videoUrl}
+                  controls
+                  autoPlay
+                  className="w-full"
+                />
+              </div>
+            )}
+
+            {/* Error message */}
+            {phase === "error" && errorMessage && (
+              <div className="rounded-lg bg-red-500/10 border border-red-500/20 p-4">
+                <p className="text-sm text-red-300">{errorMessage}</p>
+              </div>
+            )}
+
+            {/* Actions */}
+            {(phase === "done" || phase === "error") && (
+              <button
+                onClick={handleReset}
+                className="h-10 px-6 rounded-full bg-white/5 border border-white/10 text-white/70 hover:text-white hover:bg-white/10 font-medium transition-all flex items-center gap-2"
+              >
+                <RotateCcw className="w-4 h-4" />
+                <span>Create another</span>
+              </button>
+            )}
+          </div>
+        </GlassCard>
+      )}
 
       {/* Footer Text */}
       <motion.p
@@ -203,7 +332,7 @@ export default function Home() {
       </motion.p>
 
       {/* Video Vault Drawer */}
-      <VideoDrawer isOpen={isDrawerOpen} onClose={() => setIsDrawerOpen(false)} />
+      <VideoDrawer isOpen={isDrawerOpen} onClose={() => setIsDrawerOpen(false)} userId={user.uid} />
 
     </main>
   );
