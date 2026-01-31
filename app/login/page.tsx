@@ -200,14 +200,19 @@ export default function LoginPage() {
             </GlassCard>
 
             {/* Footer */}
-            <motion.p
+            <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.8 }}
-                className="absolute bottom-8 text-white/15 text-xs font-light tracking-[0.2em] uppercase"
+                className="absolute bottom-8 flex flex-col items-center gap-1"
             >
-                Powered by KIE AI
-            </motion.p>
+                <p className="text-white/15 text-xs font-light tracking-[0.2em] uppercase">
+                    Powered by KIE AI
+                </p>
+                <p className="text-white/20 text-[10px] font-light tracking-wide">
+                    by Didi with <span className="text-pink-400/60">&#9829;</span>
+                </p>
+            </motion.div>
         </main>
     );
 }
