@@ -70,8 +70,8 @@ functions.http('startGeneration', async (req, res) => {
         // 4. Generate Script with Gemini (Vertex AI)
         const { VertexAI } = require('@google-cloud/vertexai');
         const vertex_ai = new VertexAI({ project: 'gen-lang-client-0104807788', location: 'us-central1' });
-        const model = 'gemini-1.5-flash-001';
-        const generativeModel = vertex_ai.preview.getGenerativeModel({ model: model });
+        const model = 'gemini-2.5-flash';
+        const generativeModel = vertex_ai.getGenerativeModel({ model: model });
 
         const scriptPrompt = `You are a professional video scriptwriter.
         Create a concise, engaging video script (approx 6-10 seconds) based on the following user idea: "${prompt}".
