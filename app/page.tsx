@@ -9,7 +9,6 @@ import { getFirebaseAuth } from "@/lib/firebase/client";
 import { onAuthStateChanged, signOut, User } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import { StreamingText } from "@/components/StreamingText";
-import { FallingEmojis } from "@/components/FallingEmojis";
 
 type Phase = "idle" | "scripting" | "generating" | "done" | "error";
 type AspectRatio = "9:16" | "16:9";
@@ -186,8 +185,6 @@ export default function Home() {
       {/* Aurora band */}
       <div className="aurora-band" />
 
-      {/* Falling emojis during video generation */}
-      {phase === "generating" && <FallingEmojis />}
 
       {/* Subtle grid overlay */}
       <div
@@ -313,13 +310,27 @@ export default function Home() {
         <GlassCard className="w-full max-w-2xl relative z-10 p-1 shimmer-border" delay={0}>
           <div className="p-6 space-y-4">
             {/* Phase indicator */}
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium text-white/40">
-                {phase === "scripting" && "Writing script"}
-                {phase === "generating" && "Generating video"}
-                {phase === "done" && "Video ready"}
-                {phase === "error" && "Something went wrong"}
-              </span>
+            <div className="flex flex-col gap-1">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium text-white/40">
+                  {phase === "scripting" && "Writing script"}
+                  {phase === "generating" && (
+                    <span className="inline-flex items-center">
+                      Generating video
+                      <span className="inline-flex ml-1">
+                        <span className="animate-[pulse_1s_ease-in-out_infinite]">.</span>
+                        <span className="animate-[pulse_1s_ease-in-out_0.2s_infinite]">.</span>
+                        <span className="animate-[pulse_1s_ease-in-out_0.4s_infinite]">.</span>
+                      </span>
+                    </span>
+                  )}
+                  {phase === "done" && "Video ready"}
+                  {phase === "error" && "Something went wrong"}
+                </span>
+              </div>
+              {phase === "generating" && (
+                <span className="text-xs text-white/20">Usually takes 30-60 seconds</span>
+              )}
             </div>
 
             {/* Streamed script display */}
@@ -327,7 +338,11 @@ export default function Home() {
               <StreamingText
                 text={streamedScript}
                 isStreaming={phase === "scripting"}
-                className="max-h-[350px] min-h-[150px] rounded-lg bg-white/5 border border-white/10 p-5 text-sm text-white/80 font-light leading-relaxed"
+                className={`max-h-[350px] min-h-[150px] rounded-lg bg-white/5 border p-5 text-sm text-white/80 font-light leading-relaxed transition-all duration-1000 ${
+                  phase === "generating"
+                    ? "border-violet-500/30 shadow-[0_0_20px_rgba(139,92,246,0.15)] animate-pulse"
+                    : "border-white/10"
+                }`}
               />
             )}
 
