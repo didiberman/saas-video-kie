@@ -51,7 +51,7 @@ functions.http('startGeneration', async (req, res) => {
         const { prompt, duration, aspectRatio } = req.body;
         if (!prompt) return res.status(400).json({ error: 'Prompt is required' });
         const videoDuration = duration === '10' ? '10' : '6';
-        const videoAspectRatio = ['16:9', '9:16', '1:1'].includes(aspectRatio) ? aspectRatio : '16:9';
+        const videoAspectRatio = ['9:16', '16:9'].includes(aspectRatio) ? aspectRatio : '9:16';
         const creditCost = parseInt(videoDuration);
 
         // 3. Check Credits in Firestore

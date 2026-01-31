@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { GlassCard } from "@/components/GlassCard";
 import { VideoDrawer } from "@/components/VideoDrawer";
-import { Sparkles, History, LogOut, Clock, RotateCcw, RectangleHorizontal, RectangleVertical, Square } from "lucide-react";
+import { Sparkles, History, LogOut, Clock, RotateCcw, RectangleHorizontal, RectangleVertical } from "lucide-react";
 import { motion } from "framer-motion";
 import { getFirebaseAuth, getFirebaseFirestore } from "@/lib/firebase/client";
 import { onAuthStateChanged, signOut, User } from "firebase/auth";
@@ -12,12 +12,12 @@ import { useRouter } from "next/navigation";
 import ReactMarkdown from "react-markdown";
 
 type Phase = "idle" | "scripting" | "generating" | "done" | "error";
-type AspectRatio = "16:9" | "9:16" | "1:1";
+type AspectRatio = "9:16" | "16:9";
 
 export default function Home() {
   const [prompt, setPrompt] = useState("");
   const [duration, setDuration] = useState<"6" | "10">("6");
-  const [aspectRatio, setAspectRatio] = useState<AspectRatio>("16:9");
+  const [aspectRatio, setAspectRatio] = useState<AspectRatio>("9:16");
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const router = useRouter();
@@ -257,39 +257,27 @@ export default function Home() {
                 <div className="flex rounded-lg overflow-hidden border border-white/10">
                   <button
                     type="button"
-                    onClick={() => setAspectRatio("16:9")}
-                    className={`px-2.5 py-1.5 transition-all flex items-center gap-1 ${
-                      aspectRatio === "16:9"
-                        ? "bg-violet-500/20 text-violet-300"
-                        : "text-white/30 hover:text-white/50"
-                    }`}
-                    title="Landscape (16:9)"
-                  >
-                    <RectangleHorizontal className="w-4 h-4" />
-                  </button>
-                  <button
-                    type="button"
                     onClick={() => setAspectRatio("9:16")}
-                    className={`px-2.5 py-1.5 transition-all border-x border-white/10 flex items-center gap-1 ${
+                    className={`px-2.5 py-1.5 transition-all flex items-center gap-1 ${
                       aspectRatio === "9:16"
                         ? "bg-violet-500/20 text-violet-300"
                         : "text-white/30 hover:text-white/50"
                     }`}
-                    title="Portrait (9:16)"
+                    title="Portrait / Instagram (9:16)"
                   >
                     <RectangleVertical className="w-4 h-4" />
                   </button>
                   <button
                     type="button"
-                    onClick={() => setAspectRatio("1:1")}
-                    className={`px-2.5 py-1.5 transition-all flex items-center gap-1 ${
-                      aspectRatio === "1:1"
+                    onClick={() => setAspectRatio("16:9")}
+                    className={`px-2.5 py-1.5 transition-all border-l border-white/10 flex items-center gap-1 ${
+                      aspectRatio === "16:9"
                         ? "bg-violet-500/20 text-violet-300"
                         : "text-white/30 hover:text-white/50"
                     }`}
-                    title="Square (1:1)"
+                    title="Landscape / YouTube (16:9)"
                   >
-                    <Square className="w-3.5 h-3.5" />
+                    <RectangleHorizontal className="w-4 h-4" />
                   </button>
                 </div>
               </div>
