@@ -1,0 +1,10 @@
+{
+    "name": "webhook-handler",
+    "version": "1.0.0",
+    "main": "index.js",
+    "dependencies": {
+        "@google-cloud/firestore": "^8.2.0",
+        "@google-cloud/functions-framework": "^3.0.0",
+        "@supabase/supabase-js": "^2.39.0"
+    }
+}

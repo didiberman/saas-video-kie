@@ -1,0 +1,51 @@
+name: Deploy to Cloud Run
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  PROJECT_ID: gen-lang-client-0104807788
+  REGION: us-central1
+  SERVICE: video-saas-frontend
+  IMAGE: gcr.io/gen-lang-client-0104807788/video-saas
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Setup gcloud CLI
+      - id: 'auth'
+        uses: 'google-github-actions/auth@v2'
+        with:
+          credentials_json: '${{ secrets.GCP_CREDENTIALS }}'
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker
+        run: gcloud auth configure-docker
+
+      - name: Build and Push Container
+        run: |
+          docker build -t $IMAGE:$GITHUB_SHA -t $IMAGE:latest .
+          docker push $IMAGE:$GITHUB_SHA
+          docker push $IMAGE:latest
+
+      # Deploy to Cloud Run
+      # We use the :latest tag or SHA. SHA is safer for strict versioning.
+      - name: Deploy to Cloud Run
+        uses: google-github-actions/deploy-cloudrun@v2
+        with:
+          service: ${{ env.SERVICE }}
+          image: ${{ env.IMAGE }}:${{ github.sha }}
+          region: ${{ env.REGION }}
