@@ -1,0 +1,11 @@
+{
+    "name": "check-status",
+    "version": "1.0.0",
+    "description": "Check Video Generation Status Function",
+    "main": "index.js",
+    "dependencies": {
+        "@google-cloud/functions-framework": "^3.0.0",
+        "@google-cloud/firestore": "^8.2.0",
+        "firebase-admin": "^11.5.0"
+    }
+}

@@ -10,9 +10,9 @@ interface Generation {
     id: string;
     original_prompt: string;
     generated_script: string;
-    status: "waiting" | "success" | "failed";
+    status: "waiting" | "success" | "fail";
     video_url?: string;
-    error?: string;
+    fail_message?: string;
     created_at: any;
 }
 
@@ -132,11 +132,11 @@ export function VideoDrawer({ isOpen, onClose, userId }: VideoDrawerProps) {
                                                     <span className="text-xs text-white/30">Generating...</span>
                                                 </div>
                                             </div>
-                                        ) : gen.status === "failed" ? (
+                                        ) : gen.status === "fail" ? (
                                             <div className="aspect-video flex items-center justify-center bg-red-500/5">
                                                 <div className="flex flex-col items-center gap-2 px-4">
                                                     <AlertCircle className="w-6 h-6 text-red-400/60" />
-                                                    <span className="text-xs text-red-300/60 text-center">{gen.error || "Failed"}</span>
+                                                    <span className="text-xs text-red-300/60 text-center">{gen.fail_message || "Failed"}</span>
                                                 </div>
                                             </div>
                                         ) : null}

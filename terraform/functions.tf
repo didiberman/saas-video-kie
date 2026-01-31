@@ -103,3 +103,53 @@ resource "google_cloud_run_service_iam_member" "public_start_generation" {
   role     = "roles/run.invoker"
   member   = "allUsers"
 }
+
+# Zip Source for Check Status
+data "archive_file" "check_status_zip" {
+  type        = "zip"
+  source_dir  = "../functions/check-status"
+  output_path = "./dist/check-status.zip"
+  excludes    = ["node_modules"]
+}
+
+resource "google_storage_bucket_object" "check_status_obj" {
+  name   = "check-status-${data.archive_file.check_status_zip.output_md5}.zip"
+  bucket = google_storage_bucket.function_bucket.name
+  source = data.archive_file.check_status_zip.output_path
+}
+
+# Check Status Cloud Function
+resource "google_cloudfunctions2_function" "check_status" {
+  name        = "check-status"
+  location    = var.region
+  description = "Check video generation status"
+
+  build_config {
+    runtime     = "nodejs20"
+    entry_point = "checkStatus"
+    source {
+      storage_source {
+        bucket = google_storage_bucket.function_bucket.name
+        object = google_storage_bucket_object.check_status_obj.name
+      }
+    }
+  }
+
+  service_config {
+    max_instance_count = 10
+    available_memory   = "256M"
+    timeout_seconds    = 30
+
+    environment_variables = {
+      FIREBASE_SERVICE_ACCOUNT_JSON = local.kiesaas_service_account_json
+    }
+  }
+}
+
+# Allow public invocation for check-status
+resource "google_cloud_run_service_iam_member" "public_check_status" {
+  location = google_cloudfunctions2_function.check_status.location
+  service  = google_cloudfunctions2_function.check_status.name
+  role     = "roles/run.invoker"
+  member   = "allUsers"
+}

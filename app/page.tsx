@@ -3,18 +3,20 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { GlassCard } from "@/components/GlassCard";
 import { VideoDrawer } from "@/components/VideoDrawer";
-import { Sparkles, History, LogOut, Clock, RotateCcw } from "lucide-react";
+import { Sparkles, History, LogOut, Clock, RotateCcw, RectangleHorizontal, RectangleVertical, Square } from "lucide-react";
 import { motion } from "framer-motion";
-import { getFirebaseAuth, getFirebaseFirestore } from "@/lib/firebase/client";
+import { getFirebaseAuth } from "@/lib/firebase/client";
 import { onAuthStateChanged, signOut, User } from "firebase/auth";
-import { doc, onSnapshot } from "firebase/firestore";
 import { useRouter } from "next/navigation";
+import ReactMarkdown from "react-markdown";
 
 type Phase = "idle" | "scripting" | "generating" | "done" | "error";
+type AspectRatio = "16:9" | "9:16" | "1:1";
 
 export default function Home() {
   const [prompt, setPrompt] = useState("");
   const [duration, setDuration] = useState<"6" | "10">("6");
+  const [aspectRatio, setAspectRatio] = useState<AspectRatio>("16:9");
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const router = useRouter();
@@ -46,28 +48,46 @@ export default function Home() {
     scriptEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [streamedScript]);
 
-  // Listen for video completion via Firestore onSnapshot
+  // Poll for video completion
   useEffect(() => {
-    if (!currentTaskId || phase !== "generating") return;
+    if (!currentTaskId || phase !== "generating" || !user) return;
 
-    const db = getFirebaseFirestore();
-    if (!db) return;
+    let cancelled = false;
 
-    const unsubscribe = onSnapshot(doc(db, "generations", currentTaskId), (snap) => {
-      const data = snap.data();
-      if (!data) return;
+    const pollStatus = async () => {
+      try {
+        const token = await user.getIdToken();
+        const res = await fetch(`/api/status/${currentTaskId}`, {
+          headers: { "Authorization": `Bearer ${token}` },
+        });
 
-      if (data.status === "success" && data.video_url) {
-        setVideoUrl(data.video_url);
-        setPhase("done");
-      } else if (data.status === "failed") {
-        setErrorMessage(data.error || "Video generation failed");
-        setPhase("error");
+        if (!res.ok) return;
+
+        const data = await res.json();
+
+        if (cancelled) return;
+
+        if (data.status === "success" && data.video_url) {
+          setVideoUrl(data.video_url);
+          setPhase("done");
+        } else if (data.status === "fail") {
+          setErrorMessage(data.fail_message || "Video generation failed");
+          setPhase("error");
+        }
+      } catch (e) {
+        console.error("Polling error:", e);
       }
-    });
+    };
 
-    return () => unsubscribe();
-  }, [currentTaskId, phase]);
+    // Poll every 5 seconds
+    const interval = setInterval(pollStatus, 5000);
+    pollStatus(); // Initial check
+
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, [currentTaskId, phase, user]);
 
   const handleGenerate = async () => {
     if (!prompt.trim() || !user) return;
@@ -88,7 +108,7 @@ export default function Home() {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${token}`,
         },
-        body: JSON.stringify({ prompt, duration }),
+        body: JSON.stringify({ prompt, duration, aspectRatio }),
       });
 
       const contentType = res.headers.get("content-type") || "";
@@ -220,33 +240,77 @@ export default function Home() {
             />
 
             <div className="flex justify-between items-center px-6 pb-4 border-t border-white/5 pt-4">
-              <div className="flex items-center gap-2">
-                <Clock className="w-3.5 h-3.5 text-white/30" />
+              <div className="flex items-center gap-4">
+                {/* Duration selector */}
+                <div className="flex items-center gap-2">
+                  <Clock className="w-3.5 h-3.5 text-white/30" />
+                  <div className="flex rounded-lg overflow-hidden border border-white/10">
+                    <button
+                      type="button"
+                      onClick={() => setDuration("6")}
+                      className={`px-3 py-1.5 text-xs font-medium transition-all ${
+                        duration === "6"
+                          ? "bg-violet-500/20 text-violet-300 border-r border-white/10"
+                          : "text-white/30 hover:text-white/50 border-r border-white/10"
+                      }`}
+                    >
+                      6s
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setDuration("10")}
+                      className={`px-3 py-1.5 text-xs font-medium transition-all ${
+                        duration === "10"
+                          ? "bg-violet-500/20 text-violet-300"
+                          : "text-white/30 hover:text-white/50"
+                      }`}
+                    >
+                      10s
+                    </button>
+                  </div>
+                </div>
+
+                {/* Aspect ratio selector */}
                 <div className="flex rounded-lg overflow-hidden border border-white/10">
                   <button
                     type="button"
-                    onClick={() => setDuration("6")}
-                    className={`px-3 py-1.5 text-xs font-medium transition-all ${
-                      duration === "6"
-                        ? "bg-violet-500/20 text-violet-300 border-r border-white/10"
-                        : "text-white/30 hover:text-white/50 border-r border-white/10"
-                    }`}
-                  >
-                    6s
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setDuration("10")}
-                    className={`px-3 py-1.5 text-xs font-medium transition-all ${
-                      duration === "10"
+                    onClick={() => setAspectRatio("16:9")}
+                    className={`px-2.5 py-1.5 transition-all flex items-center gap-1 ${
+                      aspectRatio === "16:9"
                         ? "bg-violet-500/20 text-violet-300"
                         : "text-white/30 hover:text-white/50"
                     }`}
+                    title="Landscape (16:9)"
                   >
-                    10s
+                    <RectangleHorizontal className="w-4 h-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setAspectRatio("9:16")}
+                    className={`px-2.5 py-1.5 transition-all border-x border-white/10 flex items-center gap-1 ${
+                      aspectRatio === "9:16"
+                        ? "bg-violet-500/20 text-violet-300"
+                        : "text-white/30 hover:text-white/50"
+                    }`}
+                    title="Portrait (9:16)"
+                  >
+                    <RectangleVertical className="w-4 h-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setAspectRatio("1:1")}
+                    className={`px-2.5 py-1.5 transition-all flex items-center gap-1 ${
+                      aspectRatio === "1:1"
+                        ? "bg-violet-500/20 text-violet-300"
+                        : "text-white/30 hover:text-white/50"
+                    }`}
+                    title="Square (1:1)"
+                  >
+                    <Square className="w-3.5 h-3.5" />
                   </button>
                 </div>
               </div>
+
               <button
                 onClick={handleGenerate}
                 disabled={!prompt.trim()}
@@ -275,15 +339,15 @@ export default function Home() {
               </span>
             </div>
 
-            {/* Streamed script display */}
+            {/* Streamed script display with markdown */}
             {streamedScript && (
               <div className="max-h-[200px] overflow-y-auto rounded-lg bg-white/5 border border-white/10 p-4">
-                <p className="text-sm text-white/80 font-light whitespace-pre-wrap leading-relaxed">
-                  {streamedScript}
+                <div className="text-sm text-white/80 font-light leading-relaxed prose prose-invert prose-sm max-w-none prose-p:my-2 prose-headings:text-white/90">
+                  <ReactMarkdown>{streamedScript}</ReactMarkdown>
                   {phase === "scripting" && (
                     <span className="inline-block w-1.5 h-4 bg-violet-400 animate-pulse ml-0.5 align-middle" />
                   )}
-                </p>
+                </div>
                 <div ref={scriptEndRef} />
               </div>
             )}
