@@ -9,6 +9,7 @@ export function middleware(request: NextRequest) {
         const newUrl = new URL(request.url)
         newUrl.host = 'vibeflow.video'
         newUrl.protocol = 'https'
+        newUrl.port = '' // Force remove port 8080 (Cloud Run internal port)
 
         // Preserve path and search params
         return NextResponse.redirect(newUrl, {
