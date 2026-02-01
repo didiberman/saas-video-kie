@@ -24,7 +24,7 @@ resource "google_cloudfunctions2_function" "start_generation" {
   location = var.region
 
   build_config {
-    runtime     = "nodejs20"
+    runtime     = "nodejs22"
     entry_point = "startGeneration"
     source {
       storage_source {
@@ -43,6 +43,10 @@ resource "google_cloudfunctions2_function" "start_generation" {
       KIE_API_KEY = local.kie_api_key
       WEBHOOK_URL = google_cloudfunctions2_function.webhook_handler.service_config[0].uri
     }
+  }
+
+  lifecycle {
+    ignore_changes = [build_config[0].source]
   }
 }
 
@@ -67,7 +71,7 @@ resource "google_cloudfunctions2_function" "webhook_handler" {
   description = "Handles KIE AI callbacks"
 
   build_config {
-    runtime     = "nodejs20"
+    runtime     = "nodejs22"
     entry_point = "handleWebhook"
     source {
       storage_source {
@@ -82,6 +86,10 @@ resource "google_cloudfunctions2_function" "webhook_handler" {
     available_memory   = "256M"
     timeout_seconds    = 60
     # No env vars needed, uses default credentials for Firestore
+  }
+
+  lifecycle {
+    ignore_changes = [build_config[0].source]
   }
 }
 
@@ -123,7 +131,7 @@ resource "google_cloudfunctions2_function" "check_status" {
   description = "Check video generation status"
 
   build_config {
-    runtime     = "nodejs20"
+    runtime     = "nodejs22"
     entry_point = "checkStatus"
     source {
       storage_source {
@@ -137,6 +145,10 @@ resource "google_cloudfunctions2_function" "check_status" {
     max_instance_count = 10
     available_memory   = "256M"
     timeout_seconds    = 30
+  }
+
+  lifecycle {
+    ignore_changes = [build_config[0].source]
   }
 }
 
@@ -169,7 +181,7 @@ resource "google_cloudfunctions2_function" "list_generations" {
   description = "List user video generations"
 
   build_config {
-    runtime     = "nodejs20"
+    runtime     = "nodejs22"
     entry_point = "listGenerations"
     source {
       storage_source {
@@ -183,6 +195,10 @@ resource "google_cloudfunctions2_function" "list_generations" {
     max_instance_count = 10
     available_memory   = "256M"
     timeout_seconds    = 30
+  }
+
+  lifecycle {
+    ignore_changes = [build_config[0].source]
   }
 }
 
