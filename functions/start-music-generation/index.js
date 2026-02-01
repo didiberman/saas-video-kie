@@ -85,15 +85,19 @@ functions.http('startMusicGeneration', async (req, res) => {
         const model = 'gemini-2.5-flash';
         const generativeModel = vertex_ai.getGenerativeModel({ model: model });
 
-        const lyricsPrompt = `You are a professional songwriter.
-        Create song lyrics (approximately 1 minute when sung) based on the following user idea: "${prompt}".
-        
-        The lyrics should:
-        - Have a clear verse/chorus structure
-        - Be emotionally expressive and poetic
-        - Be suitable for the Suno AI music generator
-        
-        Return ONLY the lyrics text, no introductory remarks, no labels like "Verse 1" etc.`;
+        const lyricsPrompt = `You are a professional songwriter. Create VERY SHORT song lyrics (for a 60-second song maximum) based on: "${prompt}".
+
+CRITICAL: Keep it SHORT - only 1 verse and 1 chorus. Around 60-80 words total.
+
+Structure:
+[Verse]
+4 lines
+
+[Chorus]
+4 lines
+
+That's it. No more verses or bridges. The song must be under 60 seconds when sung.
+Return ONLY the lyrics text, no labels, no remarks.`;
 
         const streamingResp = await generativeModel.generateContentStream(lyricsPrompt);
         let generatedLyrics = '';
@@ -131,7 +135,7 @@ functions.http('startMusicGeneration', async (req, res) => {
                 title: "AI Generated Song",
                 instrumental: false,
                 model: "V4_5PLUS",
-                duration: 61,  // ~60 seconds
+                // Note: duration is controlled by lyrics length, not a parameter
                 callBackUrl: webhookUrl
             }),
         });
