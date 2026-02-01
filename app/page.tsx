@@ -315,12 +315,12 @@ export default function Home() {
       {/* Main Content — switches between prompt form and streaming panel */}
       {phase === "idle" ? (
         <>
-          {/* Community Gallery - above form */}
-          <div className="pt-20 relative z-10">
+          {/* Community Gallery - above form (Desktop only) */}
+          <div className="hidden md:block pt-20 relative z-10">
             <PublicGallery />
           </div>
 
-          <div className="w-full flex flex-col items-center justify-center py-10 min-h-[50vh] relative z-10 transition-all duration-700">
+          <div className="w-full flex flex-col items-center justify-center pt-32 pb-10 md:py-10 min-h-[60vh] md:min-h-[50vh] relative z-10 transition-all duration-700 px-4">
             <GlassCard className="w-full max-w-2xl p-1 shimmer-border" delay={0.2}>
               <div className="relative">
                 <textarea
@@ -458,6 +458,15 @@ export default function Home() {
                 </div>
               </div>
             </GlassCard>
+
+            {/* Community Gallery - below form (Mobile only) */}
+            <div className="md:hidden w-full mt-12 mb-20">
+              <div className="text-center mb-6">
+                <p className="text-white/30 text-xs tracking-widest uppercase">Community Creations</p>
+              </div>
+              <PublicGallery />
+            </div>
+
             {/* Scroll hint icon if needed, or just let the gallery peek */}
           </div>
 
