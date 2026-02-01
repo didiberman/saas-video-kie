@@ -582,7 +582,7 @@ export default function Home() {
         transition={{ delay: 0.8 }}
         className="absolute bottom-8 text-white/15 text-xs font-light tracking-[0.2em] uppercase"
       >
-        Powered by KIE AI
+        made by didi with heart
       </motion.p>
 
       {/* Video Vault Drawer */}
