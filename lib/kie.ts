@@ -1,4 +1,4 @@
-import { getVaultSecret } from "./vault";
+
 
 interface KieGenerateResponse {
     id: string;
@@ -12,18 +12,10 @@ export class KieClient {
     async init() {
         if (this.apiKey) return;
 
-        // Fetch API Key from Vault
-        // We assume the secret path is "kie-ai" and key is "api_key"
-        try {
-            const secrets = await getVaultSecret("kie-ai");
-            this.apiKey = secrets.api_key || process.env.KIE_API_KEY || null;
-        } catch {
-            console.warn("Failed to fetch KIE key from Vault, falling back to ENV");
-            this.apiKey = process.env.KIE_API_KEY || null;
-        }
+        this.apiKey = process.env.KIE_API_KEY || null;
 
         if (!this.apiKey) {
-            throw new Error("KIE AI API Key not found in Vault or Env");
+            throw new Error("KIE AI API Key not found in Env");
         }
     }
 
