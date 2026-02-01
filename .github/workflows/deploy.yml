@@ -135,8 +135,7 @@ jobs:
             --region=${{ env.REGION }} \
             --source=functions/start-generation \
             --entry-point=startGeneration \
-            --trigger-http \
-            --allow-unauthenticated
+            --trigger-http
 
       - name: Deploy webhook-handler
         if: needs.check-paths.outputs.webhook_handler == 'true'
@@ -147,8 +146,7 @@ jobs:
             --region=${{ env.REGION }} \
             --source=functions/webhook-handler \
             --entry-point=handleWebhook \
-            --trigger-http \
-            --allow-unauthenticated
+            --trigger-http
 
       - name: Deploy check-status
         if: needs.check-paths.outputs.check_status == 'true'
@@ -159,8 +157,7 @@ jobs:
             --region=${{ env.REGION }} \
             --source=functions/check-status \
             --entry-point=checkStatus \
-            --trigger-http \
-            --allow-unauthenticated
+            --trigger-http
 
       - name: Deploy list-generations
         if: needs.check-paths.outputs.list_generations == 'true'
@@ -171,5 +168,4 @@ jobs:
             --region=${{ env.REGION }} \
             --source=functions/list-generations \
             --entry-point=listGenerations \
-            --trigger-http \
-            --allow-unauthenticated
+            --trigger-http
