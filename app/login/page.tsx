@@ -1,6 +1,7 @@
 "use client";
 
 import { GlassCard } from "@/components/GlassCard";
+import { PublicGallery } from "@/components/PublicGallery";
 import { Sparkles, Mail, ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
 import { getFirebaseAuth, getGoogleProvider } from "@/lib/firebase/client";
@@ -207,6 +208,19 @@ export default function LoginPage() {
                     )}
                 </button>
             </GlassCard>
+
+            {/* Gallery Section */}
+            <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 }}
+                className="w-full max-w-4xl mt-12 mb-20 relative z-10"
+            >
+                <div className="text-center mb-6">
+                    <p className="text-white/40 text-sm tracking-widest uppercase">Community Creations</p>
+                </div>
+                <PublicGallery />
+            </motion.div>
 
             {/* Footer */}
             <motion.p
