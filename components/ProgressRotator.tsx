@@ -25,7 +25,7 @@ export function ProgressRotator() {
     }, []);
 
     return (
-        <div className="h-6 flex items-center justify-center overflow-hidden relative">
+        <div className="h-12 flex items-center justify-center overflow-hidden relative w-full px-4">
             <AnimatePresence mode="wait">
                 <motion.p
                     key={index}

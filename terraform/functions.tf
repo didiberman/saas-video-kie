@@ -44,10 +44,10 @@ resource "google_cloudfunctions2_function" "start_generation" {
     }
 
     secret_environment_variables {
-      key       = "KIE_API_KEY"
-      projectId = var.project_id
-      secret    = google_secret_manager_secret.kie_api_key.secret_id
-      version   = "latest"
+      key        = "KIE_API_KEY"
+      project_id = var.project_id
+      secret     = google_secret_manager_secret.kie_api_key.secret_id
+      version    = "latest"
     }
   }
 

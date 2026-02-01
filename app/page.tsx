@@ -385,7 +385,7 @@ export default function Home() {
                 <div className="flex items-center gap-2">
                   {phase === "generating" ? (
                     <div className="w-full flex flex-col items-center gap-3">
-                      <div className="w-full max-w-[280px]">
+                      <div className="w-full max-w-md">
                         <ProgressRotator />
                       </div>
                       <span className="text-xs text-white/20">Usually takes 30-60 seconds</span>
