@@ -12,7 +12,19 @@ variable "region" {
 variable "domain_name" {
   description = "The domain name for the application"
   type        = string
+  default     = "vibeflow.video"
+}
+
+variable "legacy_domain_name" {
+  description = "Previous domain name to redirect from"
+  type        = string
   default     = "saas.didiberman.com"
+}
+
+variable "legacy_cloudflare_zone_id" {
+  description = "Zone ID for the legacy domain"
+  type        = string
+  default     = ""
 }
 
 # Secrets
