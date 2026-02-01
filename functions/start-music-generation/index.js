@@ -134,7 +134,7 @@ Return ONLY the lyrics text, no labels, no remarks.`;
                 style: "pop, upbeat, catchy",  // Default style
                 title: "AI Generated Song",
                 instrumental: false,
-                model: "V4_5PLUS",
+                model: "V4",  // V4 has 4min max, cheaper than V4_5PLUS
                 // Note: duration is controlled by lyrics length, not a parameter
                 callBackUrl: webhookUrl
             }),
