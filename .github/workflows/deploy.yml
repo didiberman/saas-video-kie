@@ -23,6 +23,8 @@ jobs:
       webhook_handler: ${{ steps.changes.outputs.webhook_handler }}
       check_status: ${{ steps.changes.outputs.check_status }}
       list_generations: ${{ steps.changes.outputs.list_generations }}
+      create_checkout_session: ${{ steps.changes.outputs.create_checkout_session }}
+      payment_webhook: ${{ steps.changes.outputs.payment_webhook }}
     permissions:
       contents: "read"
       id-token: "write"
@@ -56,6 +58,10 @@ jobs:
               - 'functions/check-status/**'
             list_generations:
               - 'functions/list-generations/**'
+            create_checkout_session:
+              - 'functions/create-checkout-session/**'
+            payment_webhook:
+              - 'functions/payment-webhook/**'
 
   # --- Quality Checks ---
   quality_check:
@@ -182,4 +188,26 @@ jobs:
             --region=${{ env.REGION }} \
             --source=functions/start-music-generation \
             --entry-point=startMusicGeneration \
+            --trigger-http
+
+      - name: Deploy create-checkout-session
+        if: needs.check-paths.outputs.create_checkout_session == 'true'
+        run: |
+          gcloud functions deploy create-checkout-session \
+            --gen2 \
+            --runtime=nodejs22 \
+            --region=${{ env.REGION }} \
+            --source=functions/create-checkout-session \
+            --entry-point=createCheckoutSession \
+            --trigger-http
+
+      - name: Deploy payment-webhook
+        if: needs.check-paths.outputs.payment_webhook == 'true'
+        run: |
+          gcloud functions deploy payment-webhook \
+            --gen2 \
+            --runtime=nodejs22 \
+            --region=${{ env.REGION }} \
+            --source=functions/payment-webhook \
+            --entry-point=handlePaymentWebhook \
             --trigger-http
