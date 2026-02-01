@@ -114,7 +114,7 @@ export default function LoginPage() {
                     <Sparkles className="w-7 h-7 text-violet-400" />
                 </div>
                 <h1 className="text-3xl font-light tracking-wider gradient-text">VibeFlow</h1>
-                <p className="text-sm text-white/30 tracking-wide">AI-powered video creation</p>
+                <p className="text-sm text-white/30 tracking-wide">AI-powered video & song creation</p>
             </motion.div>
 
             <GlassCard className="w-full max-w-sm p-8 flex flex-col gap-5 shimmer-border" delay={0.15}>
