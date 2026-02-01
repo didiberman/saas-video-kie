@@ -1,6 +1,6 @@
 # Didi Video Dreamer
 
-A minimalist AI-powered video generation platform. Users describe a video idea (via text or voice), the system generates a script using Google Gemini, and creates a video via KIE AI — all through a sleek glassmorphism interface.
+A minimalist AI-powered video and music generation platform. Users describe a video or song idea (via text or voice), the system generates content using Google Gemini + KIE AI — all through a sleek glassmorphism interface.
 
 ## Architecture Overview
 
@@ -62,14 +62,24 @@ A minimalist AI-powered video generation platform. Users describe a video idea (
 
 ## Features
 
+### Video Generation
 - **Google OAuth** login via Firebase Authentication
 - **Voice input** — speak your video idea using browser Speech Recognition API
 - **Streaming script generation** — watch the AI script appear in real-time via NDJSON streaming
 - **Async video generation** via KIE AI with webhook-based completion
 - **Duration selection** — choose 6s or 10s videos
-- **Aspect ratio selection** — Portrait (9:16) for Instagram/TikTok or Landscape (16:9) for YouTube
-- **Credit system** — 70 free seconds per account, deducted per generation
-- **Video Vault** — slide-out drawer to browse and replay generated videos
+- **Aspect ratio selection** — Portrait (9:16) or Landscape (16:9)
+- **Credit system** — 70 free seconds per account
+
+### Music Generation 🎵
+- **AI lyrics** — Gemini generates lyrics from your prompt
+- **Suno AI music** — KIE Suno API (model V4_5PLUS) creates ~1 minute songs
+- **2 free songs** per user (separate from video credits)
+- **Audio player** — listen to completed songs in-app
+
+### UI/UX
+- **Video/Music toggle** — switch between generation modes
+- **Video Vault** — slide-out drawer to browse generated content
 - **Glassmorphism UI** — dark theme with animated gradient orbs, backdrop blur, Framer Motion animations
 
 ## Tech Stack
@@ -116,8 +126,11 @@ A minimalist AI-powered video generation platform. Users describe a video idea (
 │   ├── check-status/             # Video status checker
 │   │   ├── index.js
 │   │   └── package.json
-│   └── list-generations/         # User generations list
-│       ├── index.js
+│   ├── list-generations/         # User generations list
+│   │   ├── index.js
+│   │   └── package.json
+│   └── start-music-generation/   # Music generation function
+│       ├── index.js              # Gemini lyrics + KIE Suno API
 │       └── package.json
 ├── terraform/                    # Infrastructure as Code
 │   ├── main.tf                   # Provider config, API enablement
@@ -172,6 +185,15 @@ Document ID = Firebase UID
 Document ID = KIE AI task ID
 
 **Composite Index:** `user_id` ASC + `created_at` DESC (for Vault queries)
+
+### `music_credits` collection
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `songs_remaining` | number | Available music credits (default: 2) |
+| `updated_at` | timestamp | Last modification time |
+
+Document ID = Firebase UID
 
 ## Getting Started
 

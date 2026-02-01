@@ -13,7 +13,7 @@ resource "google_iam_workload_identity_pool_provider" "github_provider" {
     "attribute.actor"      = "assertion.actor"
     "attribute.repository" = "assertion.repository"
   }
-  attribute_condition = "assertion.repository == 'didiberman/saas-video-kie'"
+  attribute_condition = "assertion.repository == 'didiberman/video-music-saas-serverless-terraform'"
   oidc {
     issuer_uri = "https://token.actions.githubusercontent.com"
   }
@@ -28,7 +28,7 @@ resource "google_service_account" "github_actions" {
 resource "google_service_account_iam_member" "workload_identity_user" {
   service_account_id = google_service_account.github_actions.name
   role               = "roles/iam.workloadIdentityUser"
-  member             = "principalSet://iam.googleapis.com/${google_iam_workload_identity_pool.github_pool.name}/attribute.repository/didiberman/saas-video-kie"
+  member             = "principalSet://iam.googleapis.com/${google_iam_workload_identity_pool.github_pool.name}/attribute.repository/didiberman/video-music-saas-serverless-terraform"
 }
 
 # Grant the Service Account permissions on the Project
