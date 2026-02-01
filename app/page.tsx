@@ -439,21 +439,22 @@ export default function Home() {
               )}
             </div>
           </GlassCard>
+        </div>
       )}
 
-          {/* Footer Text */}
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.8 }}
-            className="absolute bottom-8 text-white/15 text-xs font-light tracking-[0.2em] uppercase"
-          >
-            Powered by KIE AI
-          </motion.p>
+      {/* Footer Text */}
+      <motion.p
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.8 }}
+        className="absolute bottom-8 text-white/15 text-xs font-light tracking-[0.2em] uppercase"
+      >
+        Powered by KIE AI
+      </motion.p>
 
-          {/* Video Vault Drawer */}
-          <VideoDrawer isOpen={isDrawerOpen} onClose={() => setIsDrawerOpen(false)} userId={user.uid} />
+      {/* Video Vault Drawer */}
+      <VideoDrawer isOpen={isDrawerOpen} onClose={() => setIsDrawerOpen(false)} userId={user.uid} />
 
-        </main >
-      );
+    </main >
+  );
 }
