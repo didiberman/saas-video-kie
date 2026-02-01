@@ -13,7 +13,7 @@ const kieApiKey = process.env.KIE_API_KEY;
 const webhookUrl = process.env.MUSIC_WEBHOOK_URL || process.env.WEBHOOK_URL;
 
 // Constants
-const FREE_SONGS_PER_USER = 999999; // Effectively unlimited
+const FREE_SONGS_PER_USER = 2;
 
 functions.http('startMusicGeneration', async (req, res) => {
     console.log("Music Generation Triggered - v1.0");
@@ -50,25 +50,32 @@ functions.http('startMusicGeneration', async (req, res) => {
         }
 
         const uid = decodedToken.uid;
+        const userEmail = decodedToken.email || '';
+
+        // Admin bypass - unlimited for admin
+        const ADMIN_EMAIL = 'yadidb@gmail.com';
+        const isAdmin = userEmail === ADMIN_EMAIL;
 
         // 2. Parse Body
         const { prompt } = req.body;
         if (!prompt) return res.status(400).json({ error: 'Prompt is required' });
 
-        // 3. Check Music Credits in Firestore
-        const musicCreditsRef = db.collection('music_credits').doc(uid);
-        const musicCreditsDoc = await musicCreditsRef.get();
-
+        // 3. Check Music Credits in Firestore (skip for admin)
         let songsRemaining = FREE_SONGS_PER_USER;
-        if (musicCreditsDoc.exists) {
-            songsRemaining = musicCreditsDoc.data().songs_remaining;
-        } else {
-            // Initialize user with free songs
-            await musicCreditsRef.set({ songs_remaining: FREE_SONGS_PER_USER, updated_at: new Date() });
-        }
+        const musicCreditsRef = db.collection('music_credits').doc(uid);
 
-        if (songsRemaining <= 0) {
-            return res.status(403).json({ error: 'No music credits remaining. You have used your 2 free songs.' });
+        if (!isAdmin) {
+            const musicCreditsDoc = await musicCreditsRef.get();
+            if (musicCreditsDoc.exists) {
+                songsRemaining = musicCreditsDoc.data().songs_remaining;
+            } else {
+                // Initialize user with free songs
+                await musicCreditsRef.set({ songs_remaining: FREE_SONGS_PER_USER, updated_at: new Date() });
+            }
+
+            if (songsRemaining <= 0) {
+                return res.status(403).json({ error: 'No music credits remaining. You have used your 2 free songs.' });
+            }
         }
 
         // 4. Switch to streaming mode
