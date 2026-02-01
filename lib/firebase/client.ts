@@ -1,5 +1,11 @@
 import { getApps, initializeApp, type FirebaseApp } from "firebase/app";
-import { getAuth, GoogleAuthProvider, type Auth } from "firebase/auth";
+import {
+    getAuth,
+    GoogleAuthProvider,
+    type Auth,
+    setPersistence,
+    browserLocalPersistence
+} from "firebase/auth";
 import { getFirestore, type Firestore } from "firebase/firestore";
 
 const firebaseConfig = {
@@ -27,7 +33,15 @@ const ensureFirebaseApp = (): FirebaseApp | null => {
 
 export const getFirebaseAuth = (): Auth | null => {
     const app = ensureFirebaseApp();
-    return app ? getAuth(app) : null;
+    if (!app) return null;
+
+    const auth = getAuth(app);
+    // Ensure persistence is set to LOCAL (default, but explicit is safer)
+    setPersistence(auth, browserLocalPersistence).catch((error) => {
+        console.error("Auth persistence error:", error);
+    });
+
+    return auth;
 };
 
 export const getFirebaseFirestore = (): Firestore | null => {
