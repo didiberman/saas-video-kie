@@ -40,8 +40,14 @@ resource "google_cloudfunctions2_function" "start_generation" {
     timeout_seconds    = 60
 
     environment_variables = {
-      KIE_API_KEY = local.kie_api_key
       WEBHOOK_URL = google_cloudfunctions2_function.webhook_handler.service_config[0].uri
+    }
+
+    secret_environment_variables {
+      key       = "KIE_API_KEY"
+      projectId = var.project_id
+      secret    = google_secret_manager_secret.kie_api_key.secret_id
+      version   = "latest"
     }
   }
 

@@ -51,3 +51,9 @@ variable "firebase_project_id" {
   type        = string
   default     = "gen-lang-client-0104807788"
 }
+
+variable "kiesaas_service_account_json" {
+  description = "Service Account JSON for Kiesaas Firebase Project"
+  type        = string
+  sensitive   = true
+}
