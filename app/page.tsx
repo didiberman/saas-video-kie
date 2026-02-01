@@ -329,7 +329,7 @@ export default function Home() {
                 <textarea
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
-                  placeholder="Describe your video dream..."
+                  placeholder={generationMode === "music" ? "What vibe do you want to hear?..." : "Describe your video dream..."}
                   className="w-full min-h-[120px] bg-transparent text-lg md:text-2xl text-white font-light placeholder:text-white/20 p-6 pr-14 resize-none focus:outline-none"
                   spellCheck={false}
                 />
