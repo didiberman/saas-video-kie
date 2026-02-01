@@ -235,13 +235,13 @@ export default function Home() {
       <div className="orb orb-5" style={{ bottom: '-10%', right: '30%' }} />
       <div className="orb orb-6" style={{ top: '30%', right: '-8%' }} />
 
-      {/* Aurora band */}
       <div className="aurora-band" />
+      <div className="ambient-light" />
 
 
       {/* Subtle grid overlay */}
       <div
-        className="absolute inset-0 pointer-events-none opacity-[0.02]"
+        className="absolute inset-0 pointer-events-none opacity-[0.04]"
         style={{
           backgroundImage: 'linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)',
           backgroundSize: '60px 60px',
@@ -278,7 +278,7 @@ export default function Home() {
       {/* Main Content — switches between prompt form and streaming panel */}
       {phase === "idle" ? (
         <>
-          <div className="w-full flex flex-col items-center justify-center min-h-[85vh] relative z-10 transition-all duration-700">
+          <div className="w-full flex flex-col items-center justify-center py-20 min-h-[60vh] relative z-10 transition-all duration-700">
             <GlassCard className="w-full max-w-2xl p-1 shimmer-border" delay={0.2}>
               <div className="relative">
                 <textarea
