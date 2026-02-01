@@ -14,8 +14,9 @@ functions.http('handleWebhook', async (req, res) => {
 
         // Detect Suno music callback format:
         // callbackType: "text" = lyrics ready, stream_audio_url available
+        // callbackType: "first" = first audio ready (partial)
         // callbackType: "complete" = final audio_url ready
-        if (body.data && (body.data.callbackType === 'text' || body.data.callbackType === 'complete') && body.data.task_id) {
+        if (body.data && (body.data.callbackType === 'text' || body.data.callbackType === 'first' || body.data.callbackType === 'complete') && body.data.task_id) {
             // Suno Music callback
             const taskId = body.data.task_id;
             const callbackType = body.data.callbackType;
