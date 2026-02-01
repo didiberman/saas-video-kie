@@ -87,6 +87,8 @@ export default function LoginPage() {
             <div className="orb orb-4" style={{ top: '20%', right: '20%' }} />
             <div className="orb orb-5" style={{ bottom: '20%', left: '-8%' }} />
             <div className="orb orb-6" style={{ top: '5%', right: '-5%' }} />
+            <div className="orb orb-7" style={{ top: '40%', left: '10%' }} />
+            <div className="orb orb-8" style={{ bottom: '10%', right: '40%' }} />
 
             {/* Aurora band */}
             <div className="aurora-band" />
