@@ -24,6 +24,22 @@ const SCRIPTING_MESSAGES = [
   "Refining dialogue & pacing...",
 ];
 
+const LYRICS_MESSAGES = [
+  "Feeling the vibe...",
+  "Finding the rhythm...",
+  "Crafting your lyrics...",
+  "Adding emotional depth...",
+  "Polishing the verses...",
+];
+
+const MUSIC_GENERATING_MESSAGES = [
+  "Composing your melody...",
+  "Adding harmonies...",
+  "Layering instruments...",
+  "Mixing the track...",
+  "Finalizing your song...",
+];
+
 export default function Home() {
   const [prompt, setPrompt] = useState("");
   const [duration, setDuration] = useState<"6" | "10">("6");
@@ -435,19 +451,21 @@ export default function Home() {
                   {phase === "generating" ? (
                     <div className="w-full flex flex-col items-center gap-3">
                       <div className="w-full max-w-md">
-                        <ProgressRotator />
+                        <ProgressRotator messages={generationMode === "music" ? MUSIC_GENERATING_MESSAGES : undefined} />
                       </div>
-                      <span className="text-xs text-white/20">Usually takes 30-60 seconds</span>
+                      <span className="text-xs text-white/20">
+                        {generationMode === "music" ? "Usually takes 1-2 minutes" : "Usually takes 30-60 seconds"}
+                      </span>
                     </div>
                   ) : phase === "scripting" ? (
                     <div className="w-full flex flex-col items-center gap-3">
                       <div className="w-full max-w-md">
-                        <ProgressRotator messages={SCRIPTING_MESSAGES} />
+                        <ProgressRotator messages={generationMode === "music" ? LYRICS_MESSAGES : SCRIPTING_MESSAGES} />
                       </div>
                     </div>
                   ) : (
                     <span className="text-sm font-medium text-white/40">
-                      {phase === "done" && "Video ready"}
+                      {phase === "done" && (generationMode === "music" ? "Song ready" : "Video ready")}
                       {phase === "error" && "Something went wrong"}
                     </span>
                   )}
