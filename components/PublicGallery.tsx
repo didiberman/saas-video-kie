@@ -19,8 +19,13 @@ export function PublicGallery() {
     const [loading, setLoading] = useState(true);
     const [playingAudio, setPlayingAudio] = useState<string | null>(null);
     const [hoveredVideo, setHoveredVideo] = useState<string | null>(null);
+    const [isMobile, setIsMobile] = useState(false);
 
     useEffect(() => {
+        const checkMobile = () => setIsMobile(window.innerWidth < 768);
+        checkMobile();
+        window.addEventListener('resize', checkMobile);
+
         fetch("/api/gallery")
             .then((res) => res.json())
             .then((data) => {
@@ -28,6 +33,8 @@ export function PublicGallery() {
                 setLoading(false);
             })
             .catch(() => setLoading(false));
+
+        return () => window.removeEventListener('resize', checkMobile);
     }, []);
 
     const toggleAudio = (id: string, audioUrl: string) => {
@@ -46,11 +53,13 @@ export function PublicGallery() {
         }
     };
 
+    const displayedItems = isMobile ? items.slice(0, 10) : items;
+
     if (loading) {
         return (
             <div className="w-full py-8">
-                <div className="flex gap-4 overflow-x-auto pb-4 px-4">
-                    {[...Array(5)].map((_, i) => (
+                <div className="flex gap-4 overflow-x-auto pb-4 px-4 scrollbar-hide">
+                    {[...Array(isMobile ? 3 : 5)].map((_, i) => (
                         <div
                             key={i}
                             className="flex-shrink-0 w-48 h-72 rounded-xl bg-white/5 animate-pulse"
@@ -73,7 +82,7 @@ export function PublicGallery() {
             </div>
 
             <div className="flex gap-4 overflow-x-auto pb-4 px-4 snap-x snap-mandatory scrollbar-hide">
-                {items.map((item, index) => (
+                {displayedItems.map((item, index) => (
                     <motion.div
                         key={item.id}
                         initial={{ opacity: 0, y: 20 }}
@@ -84,8 +93,8 @@ export function PublicGallery() {
                         {item.type === "video" && item.videoUrl ? (
                             <div
                                 className="relative w-48 h-72 rounded-xl overflow-hidden bg-black/50 border border-white/10 group cursor-pointer"
-                                onMouseEnter={() => setHoveredVideo(item.id)}
-                                onMouseLeave={() => setHoveredVideo(null)}
+                                onMouseEnter={() => !isMobile && setHoveredVideo(item.id)}
+                                onMouseLeave={() => !isMobile && setHoveredVideo(null)}
                             >
                                 <video
                                     src={item.videoUrl}
@@ -93,8 +102,10 @@ export function PublicGallery() {
                                     muted
                                     loop
                                     playsInline
+                                    preload="metadata" // Optimize loading
+                                    poster={item.imageUrl || undefined} // Use thumbnail if available
                                     ref={(el) => {
-                                        if (el) {
+                                        if (el && !isMobile) {
                                             if (hoveredVideo === item.id) {
                                                 el.play().catch(() => { });
                                             } else {
@@ -125,6 +136,7 @@ export function PublicGallery() {
                                 <audio
                                     id={`audio-${item.id}`}
                                     src={item.audioUrl}
+                                    preload="none" // Optimize loading
                                     onEnded={() => setPlayingAudio(null)}
                                 />
                                 <div className="absolute inset-0 flex items-center justify-center">
