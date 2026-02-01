@@ -25,7 +25,8 @@ export function CreditsBadge({ userId }: CreditsBadgeProps) {
                 // Fallback to legacy field logic if needed, but we standardized on 'seconds_remaining' as unit
                 setCredits(data.seconds_remaining || 0);
             } else {
-                setCredits(0);
+                // Default to 30 credits (Free Trial) if no document exists
+                setCredits(30);
             }
         });
 
