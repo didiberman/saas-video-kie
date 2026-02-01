@@ -13,10 +13,12 @@ functions.http('handleWebhook', async (req, res) => {
         console.log('Webhook received:', JSON.stringify(body).substring(0, 500));
 
         // Detect Suno music callback format:
-        // { code: 200, data: { callbackType: "text", data: [...], task_id: "..." }, msg: "..." }
-        if (body.data && body.data.callbackType === 'text' && body.data.task_id) {
+        // callbackType: "text" = lyrics ready, stream_audio_url available
+        // callbackType: "complete" = final audio_url ready
+        if (body.data && (body.data.callbackType === 'text' || body.data.callbackType === 'complete') && body.data.task_id) {
             // Suno Music callback
             const taskId = body.data.task_id;
+            const callbackType = body.data.callbackType;
             const songsArray = body.data.data;
 
             if (!Array.isArray(songsArray) || songsArray.length === 0) {
@@ -24,22 +26,31 @@ functions.http('handleWebhook', async (req, res) => {
                 return res.status(400).json({ error: "Invalid Suno Payload: missing songs" });
             }
 
-            // Take the first song's audio URL
+            // Take the first song
             const firstSong = songsArray[0];
-            const audioUrl = firstSong.stream_audio_url || firstSong.audio_url || '';
+
+            // For 'complete' callback, use audio_url. For 'text' callback, use stream_audio_url
+            const audioUrl = callbackType === 'complete'
+                ? (firstSong.audio_url || firstSong.source_audio_url || firstSong.stream_audio_url || '')
+                : (firstSong.stream_audio_url || firstSong.audio_url || '');
             const imageUrl = firstSong.image_url || '';
             const title = firstSong.title || '';
+            const duration = firstSong.duration || null;
 
-            console.log(`Suno callback for Task ${taskId}: ${audioUrl ? 'success' : 'no audio URL'}`);
+            console.log(`Suno ${callbackType} callback for Task ${taskId}: ${audioUrl ? 'success' : 'no audio URL'}`);
 
             const docRef = firestore.collection('generations').doc(taskId);
-            await docRef.update({
-                status: audioUrl ? 'success' : 'fail',
+            const updateData = {
+                status: audioUrl ? 'success' : 'waiting',
                 audio_url: audioUrl,
                 image_url: imageUrl,
-                song_title: title,
                 updated_at: new Date()
-            });
+            };
+
+            if (title) updateData.song_title = title;
+            if (duration) updateData.duration = duration;
+
+            await docRef.update(updateData);
 
             return res.status(200).json({ success: true });
         }
