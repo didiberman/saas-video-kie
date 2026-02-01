@@ -344,10 +344,10 @@ export default function Home() {
                   {isRecording ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
                 </button>
 
-                <div className="flex flex-col gap-3 px-4 md:px-6 pb-4 border-t border-white/5 pt-4 md:flex-row md:justify-between md:items-center">
-                  <div className="flex items-center gap-3 md:gap-4">
+                <div className="flex flex-col md:flex-row gap-4 px-4 md:px-6 pb-4 border-t border-white/5 pt-4 justify-between items-center">
+                  <div className="flex flex-wrap justify-center md:items-center gap-3 md:gap-4 w-full md:w-auto">
                     {/* Mode toggle: Video / Music */}
-                    <div className="flex rounded-lg overflow-hidden border border-white/10">
+                    <div className="flex rounded-lg overflow-hidden border border-white/10 shrink-0">
                       <button
                         type="button"
                         onClick={() => setGenerationMode("video")}
@@ -376,7 +376,7 @@ export default function Home() {
                     {generationMode === "video" && (
                       <>
                         {/* Duration selector */}
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 shrink-0">
                           <Clock className="w-3.5 h-3.5 text-white/30" />
                           <div className="flex rounded-lg overflow-hidden border border-white/10">
                             <button
@@ -401,48 +401,46 @@ export default function Home() {
                             </button>
                           </div>
                         </div>
+
+                        {/* Aspect ratio selector (video only) */}
+                        <div className="flex rounded-lg overflow-hidden border border-white/10 shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => setAspectRatio("9:16")}
+                            className={`px-2.5 py-1.5 transition-all flex items-center gap-1 ${aspectRatio === "9:16"
+                              ? "bg-violet-500/20 text-violet-300"
+                              : "text-white/30 hover:text-white/50"
+                              }`}
+                            title="Portrait / Instagram (9:16)"
+                          >
+                            <RectangleVertical className="w-4 h-4" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setAspectRatio("16:9")}
+                            className={`px-2.5 py-1.5 transition-all border-l border-white/10 flex items-center gap-1 ${aspectRatio === "16:9"
+                              ? "bg-violet-500/20 text-violet-300"
+                              : "text-white/30 hover:text-white/50"
+                              }`}
+                            title="Landscape / YouTube (16:9)"
+                          >
+                            <RectangleHorizontal className="w-4 h-4" />
+                          </button>
+                        </div>
                       </>
                     )}
 
                     {/* Music Style Input */}
                     {generationMode === "music" && (
-                      <div className="flex items-center gap-2 border-l border-white/10 pl-4 ml-1 flex-1">
-                        <span className="text-white/40 text-sm font-light whitespace-nowrap">Style:</span>
+                      <div className="flex items-center gap-2 border-l-0 md:border-l border-white/10 md:pl-4 md:ml-1 w-full md:w-auto">
+                        <span className="text-white/40 text-sm font-light whitespace-nowrap hidden md:inline">Style:</span>
                         <input
                           type="text"
                           value={style}
                           onChange={(e) => setStyle(e.target.value)}
-                          placeholder="pop, upbeat..."
-                          className="bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white placeholder:text-white/20 focus:outline-none focus:border-violet-500/50 w-full min-w-[120px]"
+                          placeholder="Style (e.g. pop, lofi)..."
+                          className="bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white placeholder:text-white/20 focus:outline-none focus:border-violet-500/50 w-full md:min-w-[120px]"
                         />
-                      </div>
-                    )}
-
-                    {/* Aspect ratio selector (video only) */}
-                    {generationMode === "video" && (
-                      <div className="flex rounded-lg overflow-hidden border border-white/10">
-                        <button
-                          type="button"
-                          onClick={() => setAspectRatio("9:16")}
-                          className={`px-2.5 py-1.5 transition-all flex items-center gap-1 ${aspectRatio === "9:16"
-                            ? "bg-violet-500/20 text-violet-300"
-                            : "text-white/30 hover:text-white/50"
-                            }`}
-                          title="Portrait / Instagram (9:16)"
-                        >
-                          <RectangleVertical className="w-4 h-4" />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setAspectRatio("16:9")}
-                          className={`px-2.5 py-1.5 transition-all border-l border-white/10 flex items-center gap-1 ${aspectRatio === "16:9"
-                            ? "bg-violet-500/20 text-violet-300"
-                            : "text-white/30 hover:text-white/50"
-                            }`}
-                          title="Landscape / YouTube (16:9)"
-                        >
-                          <RectangleHorizontal className="w-4 h-4" />
-                        </button>
                       </div>
                     )}
                   </div>
@@ -450,7 +448,7 @@ export default function Home() {
                   <button
                     onClick={handleGenerate}
                     disabled={!prompt.trim()}
-                    className="h-10 px-6 rounded-full bg-gradient-to-r from-violet-500 to-blue-500 text-white font-medium hover:from-violet-400 hover:to-blue-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-2 shadow-lg shadow-violet-500/20 w-full md:w-auto"
+                    className="h-10 px-6 rounded-full bg-gradient-to-r from-violet-500 to-blue-500 text-white font-medium hover:from-violet-400 hover:to-blue-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-2 shadow-lg shadow-violet-500/20 w-full md:w-auto shrink-0"
                   >
                     <span>Generate</span>
                     <Sparkles className="w-4 h-4" />
