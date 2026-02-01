@@ -1,13 +1,12 @@
 const functions = require('@google-cloud/functions-framework');
 const admin = require('firebase-admin');
-const { Firestore } = require('@google-cloud/firestore');
 const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
 
 // Initialize Firebase Admin with default credentials (same project)
 admin.initializeApp();
 
 // Firestore client (same project)
-const db = new Firestore();
+const db = admin.firestore();
 
 const kieApiKey = process.env.KIE_API_KEY;
 const webhookUrl = process.env.MUSIC_WEBHOOK_URL || process.env.WEBHOOK_URL;
