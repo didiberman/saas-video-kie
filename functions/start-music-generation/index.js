@@ -116,7 +116,8 @@ functions.http('startMusicGeneration', async (req, res) => {
         // 6. Notify client: now generating music
         sendEvent({ type: 'status', message: 'Generating music...' });
 
-        // 7. Call KIE Suno API (Non-custom mode for simplicity)
+        // 7. Call KIE Suno API with customMode for duration control
+        // duration options: 61 (~1min), 122 (~2min), 183 (~3min), 244 (~4min)
         const kieRes = await fetch('https://api.kie.ai/api/v1/generate', {
             method: "POST",
             headers: {
@@ -124,10 +125,13 @@ functions.http('startMusicGeneration', async (req, res) => {
                 "Content-Type": "application/json",
             },
             body: JSON.stringify({
-                prompt: generatedLyrics.substring(0, 500), // Limit for non-custom mode
-                customMode: false,
+                customMode: true,
+                lyrics: generatedLyrics.substring(0, 3000), // Lyrics for custom mode
+                style: "pop, upbeat, catchy",  // Default style
+                title: "AI Generated Song",
                 instrumental: false,
                 model: "V4_5PLUS",
+                duration: 61,  // ~60 seconds
                 callBackUrl: webhookUrl
             }),
         });
