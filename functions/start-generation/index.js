@@ -147,6 +147,7 @@ functions.http('startGeneration', async (req, res) => {
             generated_script: generatedScript,
             status: 'waiting',
             kie_task_id: taskId,
+            cost: creditCost,
             created_at: new Date()
         });
 

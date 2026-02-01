@@ -397,3 +397,53 @@ resource "google_cloud_run_service_iam_member" "public_payment_webhook" {
   role     = "roles/run.invoker"
   member   = "allUsers"
 }
+
+# Zip Source for List Transactions
+data "archive_file" "list_transactions_zip" {
+  type        = "zip"
+  source_dir  = "../functions/list-transactions"
+  output_path = "./dist/list-transactions.zip"
+  excludes    = ["node_modules"]
+}
+
+resource "google_storage_bucket_object" "list_transactions_obj" {
+  name   = "list-transactions-${data.archive_file.list_transactions_zip.output_md5}.zip"
+  bucket = google_storage_bucket.function_bucket.name
+  source = data.archive_file.list_transactions_zip.output_path
+}
+
+# List Transactions Cloud Function
+resource "google_cloudfunctions2_function" "list_transactions" {
+  name        = "list-transactions"
+  location    = var.region
+  description = "List user transactions"
+
+  build_config {
+    runtime     = "nodejs22"
+    entry_point = "listTransactions"
+    source {
+      storage_source {
+        bucket = google_storage_bucket.function_bucket.name
+        object = google_storage_bucket_object.list_transactions_obj.name
+      }
+    }
+  }
+
+  service_config {
+    max_instance_count = 10
+    available_memory   = "256M"
+    timeout_seconds    = 30
+  }
+
+  lifecycle {
+    ignore_changes = [build_config[0].source]
+  }
+}
+
+# Allow public invocation for list-transactions
+resource "google_cloud_run_service_iam_member" "public_list_transactions" {
+  location = google_cloudfunctions2_function.list_transactions.location
+  service  = google_cloudfunctions2_function.list_transactions.name
+  role     = "roles/run.invoker"
+  member   = "allUsers"
+}

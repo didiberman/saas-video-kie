@@ -1,6 +1,8 @@
-import { X, Sparkles, Zap } from "lucide-react";
+import { X, Sparkles, Zap, History } from "lucide-react";
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { PricingCards } from "./PricingCards";
+import { TransactionHistory } from "./TransactionHistory";
 
 interface CreditsModalProps {
     isOpen: boolean;
@@ -9,6 +11,8 @@ interface CreditsModalProps {
 }
 
 export function CreditsModal({ isOpen, onClose, userId }: CreditsModalProps) {
+    const [view, setView] = useState<'buy' | 'history'>('buy');
+
     if (!isOpen) return null;
 
     return (
@@ -57,6 +61,24 @@ export function CreditsModal({ isOpen, onClose, userId }: CreditsModalProps) {
                         </div>
 
                         <div className="space-y-4 mt-8 md:mt-0">
+                            {/* View Toggle */}
+                            <div className="flex gap-2 mb-4">
+                                <button
+                                    onClick={() => setView('buy')}
+                                    className={`flex-1 py-2 rounded-lg text-xs font-medium transition-all ${view === 'buy' ? 'bg-white text-black' : 'bg-white/5 text-white/40 hover:text-white'
+                                        }`}
+                                >
+                                    Buy Credits
+                                </button>
+                                <button
+                                    onClick={() => setView('history')}
+                                    className={`flex-1 py-2 rounded-lg text-xs font-medium transition-all ${view === 'history' ? 'bg-white text-black' : 'bg-white/5 text-white/40 hover:text-white'
+                                        }`}
+                                >
+                                    History
+                                </button>
+                            </div>
+
                             <div className="p-4 rounded-xl bg-white/5 border border-white/5">
                                 <p className="text-xs text-white/40 uppercase tracking-widest mb-1">Exchange Rate</p>
                                 <div className="flex justify-between text-sm text-white/80">
@@ -71,14 +93,19 @@ export function CreditsModal({ isOpen, onClose, userId }: CreditsModalProps) {
                         </div>
                     </div>
 
-                    {/* Right Side: Pricing Options */}
+                    {/* Right Side: Content */}
                     <div className="md:w-2/3 p-6 md:p-8 bg-black/40 overflow-y-auto">
-                        <PricingCards />
-
-                        <p className="text-center text-white/20 text-xs mt-8 flex items-center justify-center gap-1">
-                            <Zap className="w-3 h-3" />
-                            Secure Payment via Stripe
-                        </p>
+                        {view === 'buy' ? (
+                            <>
+                                <PricingCards />
+                                <p className="text-center text-white/20 text-xs mt-8 flex items-center justify-center gap-1">
+                                    <Zap className="w-3 h-3" />
+                                    Secure Payment via Stripe
+                                </p>
+                            </>
+                        ) : (
+                            <TransactionHistory />
+                        )}
                     </div>
                 </motion.div>
             </div>

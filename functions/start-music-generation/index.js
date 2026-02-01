@@ -60,21 +60,24 @@ functions.http('startMusicGeneration', async (req, res) => {
         const { prompt, style } = req.body;
         if (!prompt) return res.status(400).json({ error: 'Prompt is required' });
 
-        // 3. Check Music Credits in Firestore (skip for admin)
-        let songsRemaining = FREE_SONGS_PER_USER;
-        const musicCreditsRef = db.collection('music_credits').doc(uid);
+        // 3. Check Unified Credits in Firestore
+        // Cost: 10 Credits per song
+        const SONG_COST = 10;
+        let creditsRemaining = 0;
+        const creditsRef = db.collection('credits').doc(uid);
 
         if (!isAdmin) {
-            const musicCreditsDoc = await musicCreditsRef.get();
-            if (musicCreditsDoc.exists) {
-                songsRemaining = musicCreditsDoc.data().songs_remaining;
+            const creditsDoc = await creditsRef.get();
+            if (creditsDoc.exists) {
+                creditsRemaining = creditsDoc.data().seconds_remaining || 0;
             } else {
-                // Initialize user with free songs
-                await musicCreditsRef.set({ songs_remaining: FREE_SONGS_PER_USER, updated_at: new Date() });
+                // Initialize user with 30 free credits (if not already init)
+                creditsRemaining = 30;
+                await creditsRef.set({ seconds_remaining: 30, updated_at: new Date() });
             }
 
-            if (songsRemaining <= 0) {
-                return res.status(403).json({ error: 'No music credits remaining. You have used your 2 free songs.' });
+            if (creditsRemaining < SONG_COST) {
+                return res.status(403).json({ error: `Insufficient credits. 1 Song = ${SONG_COST} Credits. You have ${creditsRemaining}.` });
             }
         }
 
@@ -162,14 +165,17 @@ Return ONLY the lyrics text, no labels, no remarks.`;
             generated_lyrics: generatedLyrics,
             status: 'waiting',
             kie_task_id: taskId,
+            cost: 10,
             created_at: new Date()
         });
 
-        // 9. Deduct Music Credit
-        await musicCreditsRef.update({
-            songs_remaining: songsRemaining - 1,
-            updated_at: new Date()
-        });
+        // 9. Deduct Credits
+        if (!isAdmin) {
+            await creditsRef.update({
+                seconds_remaining: creditsRemaining - SONG_COST,
+                updated_at: new Date()
+            });
+        }
 
         // 10. Send final event with taskId
         sendEvent({ type: 'done', taskId: taskId });
