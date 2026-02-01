@@ -300,6 +300,9 @@ Starts music generation. Returns NDJSON stream.
 ### GET `/api/status/[taskId]`
 Polls completion status.
 
+### GET `/api/generations`
+Returns user's generation history (requires auth).
+
 ### GET `/api/gallery`
 Public feed of recent successful generations.
 
