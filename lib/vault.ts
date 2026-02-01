@@ -1,4 +1,4 @@
-import { headers } from 'next/headers';
+
 
 interface VaultSecretResponse {
   data: {
@@ -24,7 +24,7 @@ export async function getVaultSecret(secretPath: string): Promise<Record<string,
   // But Vault API usually needs `v1/secret/data/my-secret`
   // We'll assume secretPath is just the name, e.g., "video-saas"
   // Adjust mount point "secret" as needed.
-  const mountPoint = 'secret'; 
+  const mountPoint = 'secret';
   const url = `${vaultAddr}/v1/${mountPoint}/data/${secretPath}`;
 
   try {

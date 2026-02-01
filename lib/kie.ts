@@ -17,7 +17,7 @@ export class KieClient {
         try {
             const secrets = await getVaultSecret("kie-ai");
             this.apiKey = secrets.api_key || process.env.KIE_API_KEY || null;
-        } catch (e) {
+        } catch {
             console.warn("Failed to fetch KIE key from Vault, falling back to ENV");
             this.apiKey = process.env.KIE_API_KEY || null;
         }

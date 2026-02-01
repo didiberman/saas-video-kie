@@ -33,9 +33,13 @@ export default function LoginPage() {
         try {
             await signInWithPopup(firebaseAuth, provider);
             router.push("/");
-        } catch (e: any) {
+        } catch (e: unknown) {
             console.error(e);
-            setError(e.message);
+            if (e instanceof Error) {
+                setError(e.message);
+            } else {
+                setError("An unknown error occurred during Google sign-in.");
+            }
         } finally {
             setLoading(false);
         }
@@ -54,17 +58,20 @@ export default function LoginPage() {
                 await signInWithEmailAndPassword(firebaseAuth, email, password);
             }
             router.push("/");
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error(err);
-            const code = err.code || "";
+            // Firebase Auth errors have a 'code' property
+            const code = (err as { code?: string }).code || "";
             if (code === "auth/user-not-found" || code === "auth/invalid-credential") {
                 setError("Invalid email or password.");
             } else if (code === "auth/email-already-in-use") {
                 setError("An account with this email already exists.");
             } else if (code === "auth/weak-password") {
                 setError("Password must be at least 6 characters.");
-            } else {
+            } else if (err instanceof Error) {
                 setError(err.message);
+            } else {
+                setError("An unknown authentication error occurred.");
             }
         } finally {
             setLoading(false);

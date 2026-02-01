@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, PlayCircle, Loader2, AlertCircle } from "lucide-react";
 import { getFirebaseFirestore } from "@/lib/firebase/client";
-import { collection, query, where, orderBy, onSnapshot } from "firebase/firestore";
+import { collection, query, where, orderBy, onSnapshot, Timestamp } from "firebase/firestore";
 
 interface Generation {
     id: string;
@@ -13,7 +13,7 @@ interface Generation {
     status: "waiting" | "success" | "fail";
     video_url?: string;
     fail_message?: string;
-    created_at: any;
+    created_at: Timestamp | Date | null;
 }
 
 interface VideoDrawerProps {
@@ -51,9 +51,15 @@ export function VideoDrawer({ isOpen, onClose, userId }: VideoDrawerProps) {
         return () => unsubscribe();
     }, [isOpen, userId]);
 
-    const formatDate = (timestamp: any) => {
+    const formatDate = (timestamp: Timestamp | Date | null) => {
         if (!timestamp) return "";
-        const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+        let date: Date;
+        if (timestamp instanceof Timestamp) {
+            date = timestamp.toDate();
+        } else {
+            date = timestamp;
+        }
+
         const now = new Date();
         const diff = now.getTime() - date.getTime();
         const minutes = Math.floor(diff / 60000);

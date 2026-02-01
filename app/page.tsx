@@ -187,15 +187,21 @@ export default function Home() {
             } else if (event.type === "error") {
               throw new Error(event.message);
             }
-          } catch (parseErr: any) {
-            if (parseErr.message && !parseErr.message.includes("JSON")) {
+          } catch (parseErr: unknown) {
+            // Check if error is Error object before accessing message
+            const parseErrMsg = parseErr instanceof Error ? parseErr.message : String(parseErr);
+            if (parseErrMsg && !parseErrMsg.includes("JSON")) {
               throw parseErr;
             }
           }
         }
       }
-    } catch (e: any) {
-      setErrorMessage(e.message);
+    } catch (e: unknown) {
+      if (e instanceof Error) {
+        setErrorMessage(e.message);
+      } else {
+        setErrorMessage("An unknown error occurred.");
+      }
       setPhase("error");
     }
   };
