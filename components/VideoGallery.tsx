@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { PlayCircle, Loader2, AlertCircle, Music, Play, Pause } from "lucide-react";
 import { getFirebaseFirestore } from "@/lib/firebase/client";
-import { collection, query, where, orderBy, onSnapshot, Timestamp } from "firebase/firestore";
+import { collection, query, where, orderBy, onSnapshot, Timestamp, limit } from "firebase/firestore";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface Generation {
@@ -35,7 +35,8 @@ export function VideoGallery({ userId }: VideoGalleryProps) {
         const q = query(
             collection(db, "generations"),
             where("user_id", "==", userId),
-            orderBy("created_at", "desc")
+            orderBy("created_at", "desc"),
+            limit(50)
         );
 
         const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -76,8 +77,14 @@ export function VideoGallery({ userId }: VideoGalleryProps) {
 
     const toggleAudio = (id: string) => {
         const audio = document.getElementById(`user-audio-${id}`) as HTMLAudioElement;
+
+        if (!audio) {
+            console.error("Audio element not found for id:", id);
+            return;
+        }
+
         if (playingAudioId === id) {
-            audio?.pause();
+            audio.pause();
             setPlayingAudioId(null);
         } else {
             // Pause others
@@ -85,7 +92,15 @@ export function VideoGallery({ userId }: VideoGalleryProps) {
                 const prev = document.getElementById(`user-audio-${playingAudioId}`) as HTMLAudioElement;
                 prev?.pause();
             }
-            audio?.play();
+
+            const playPromise = audio.play();
+            if (playPromise !== undefined) {
+                playPromise.catch((error) => {
+                    console.error("Audio playback error:", error);
+                    // Reset state if play failed (e.g. not loaded)
+                    setPlayingAudioId(null);
+                });
+            }
             setPlayingAudioId(id);
         }
     };
