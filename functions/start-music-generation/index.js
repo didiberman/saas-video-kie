@@ -130,12 +130,11 @@ Return ONLY the lyrics text, no labels, no remarks.`;
             },
             body: JSON.stringify({
                 customMode: true,
-                lyrics: generatedLyrics.substring(0, 3000), // Lyrics for custom mode
-                style: "pop, upbeat, catchy",  // Default style
-                title: "AI Generated Song",
+                prompt: generatedLyrics.substring(0, 3000), // Lyrics go in 'prompt' for customMode
+                style: "pop, upbeat, catchy",  // Required for customMode
+                title: "AI Generated Song",    // Required for customMode
                 instrumental: false,
-                model: "V4",  // V4 has 4min max, cheaper than V4_5PLUS
-                // Note: duration is controlled by lyrics length, not a parameter
+                model: "V4",  // V4 has 4min max
                 callBackUrl: webhookUrl
             }),
         });
